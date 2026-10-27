@@ -1,0 +1,1730 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ICE VISION Parcours</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+/* Gleiche Farbwelt wie ICE VISION: Hallenblau, Eisweiss, Bandenblau als Akzent.
+   Ampelfarben nur fuer Bewertungen, Orange nur fuer die Stange. */
+:root{
+  --rink:#06111D; --deck:#0B1A2A; --deck2:#102338; --rule:#1C3550; --rule2:#28496B;
+  --ice:#EAF3FB; --frost:#93AAC2; --dim:#5F7A95;
+  --blue:#3FBFEF; --blue2:#2A8FD6; --ink:#04121F;
+  --g:#2BD98A; --y:#F7C23C; --r:#FF5A4C; --bar:#FF8A1E;
+  --num:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --txt:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;background:var(--rink)}
+body{margin:0;min-height:100vh;color:var(--ice);font:400 15px/1.45 var(--txt);
+  background:radial-gradient(1200px 520px at 30% -12%,rgba(63,191,239,.13),transparent 60%),var(--rink);background-attachment:fixed}
+[hidden]{display:none!important}
+button,select,.btn{font:500 14.5px/1 var(--txt);color:var(--ice);background:var(--deck2);border:1px solid var(--rule2);border-radius:10px;min-height:44px;padding:0 14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
+button:hover:not(:disabled),.btn:hover{border-color:var(--blue2)}
+button:disabled{opacity:.35;cursor:default}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+button.primary{background:var(--blue);border-color:var(--blue);color:var(--ink);font-weight:600;min-height:50px;font-size:16px}
+button.primary:hover:not(:disabled){background:#62CDF4}
+button[aria-pressed="true"]{background:rgba(63,191,239,.16);border-color:var(--blue)}
+.btn input{display:none}
+input[type=text]{font:inherit;font-size:16px;min-height:44px;padding:0 12px;border:1px solid var(--rule2);border-radius:10px;background:var(--rink);color:var(--ice);width:100%}
+
+.shell{max-width:1320px;margin:0 auto;padding:14px 16px 64px}
+.top{display:flex;align-items:center;gap:12px;padding:4px 2px 14px;border-bottom:1px solid var(--rule);margin-bottom:16px}
+.logo{flex:none;width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:var(--blue);color:var(--ink);font:700 18px/1 var(--num)}
+.brand h1{margin:0;font:700 24px/1 var(--num);letter-spacing:.06em}
+.brand .sub{font-size:13px;color:var(--frost);margin-top:2px}
+.status-pill{margin-left:auto;display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--frost);white-space:nowrap}
+.status-pill::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--y);box-shadow:0 0 0 3px rgba(247,194,60,.18)}
+.status-pill.ok::before{background:var(--g);box-shadow:0 0 0 3px rgba(43,217,138,.18)}
+.status-pill.bad::before{background:var(--r);box-shadow:0 0 0 3px rgba(255,90,76,.18)}
+
+.grid{display:grid;gap:18px}
+@media (min-width:980px){.grid{grid-template-columns:minmax(0,1fr) 400px;align-items:start}.board{position:sticky;top:14px}}
+
+.stage{position:relative;background:#000;border:1px solid var(--rule);border-radius:14px;overflow:hidden;min-height:240px}
+.stage:fullscreen{border:0;border-radius:0;display:flex;align-items:center;justify-content:center}
+.stage:fullscreen canvas#c{max-height:100vh;width:auto;max-width:100vw}
+canvas#c{display:none;margin:0 auto;max-width:100%;max-height:80vh;width:auto;height:auto;touch-action:manipulation}
+canvas#c.edit{cursor:crosshair}
+#v{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:56px 20px;min-height:320px;background:var(--deck)}
+.empty p{margin:0;color:var(--frost);max-width:40ch}
+.empty .acts{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.stagebar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.stagebar>*{flex:1 1 140px}
+.drawbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px;padding:8px;background:var(--deck);border:1px solid var(--rule);border-radius:12px}
+.drawbar .k{font:600 12px/1 var(--num);letter-spacing:.08em;text-transform:uppercase;color:var(--frost);margin-right:4px}
+.drawbar button{min-height:38px;padding:0 12px}
+.drawbar .col{width:38px;padding:0;border-radius:50%;border:2px solid var(--rule2)}
+.drawbar .col[aria-pressed="true"]{outline:3px solid var(--ice);outline-offset:2px}
+canvas#c.frozen{touch-action:none}
+.auto{background:var(--rink);border:1px solid var(--rule);border-radius:10px;padding:10px 12px;margin:10px 0;font-size:13.5px}
+.auto b{color:var(--ice)}
+.statusline{font-size:13.5px;color:var(--frost);margin:10px 2px 0;min-height:20px}
+
+.board{display:flex;flex-direction:column;gap:12px}
+.step{background:var(--deck);border:1px solid var(--rule);border-radius:14px;padding:14px}
+.step.off{opacity:.45}
+.step.cur{border-color:var(--blue2)}
+.step h2{margin:0 0 10px;font:600 17px/1.1 var(--num);letter-spacing:.05em;text-transform:uppercase;display:flex;align-items:center;gap:10px}
+.step h2 .n{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--deck2);border:1px solid var(--rule2);font-size:14px}
+.step.done h2 .n{background:var(--g);border-color:var(--g);color:var(--ink)}
+.step.cur h2 .n{background:var(--blue);border-color:var(--blue);color:var(--ink)}
+.step p{margin:0 0 10px;font-size:13.5px;color:var(--frost)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row>*{flex:1 1 0;min-width:0}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;padding:4px;gap:4px;background:var(--rink);border:1px solid var(--rule);border-radius:12px}
+.seg button{border:0;background:transparent;min-height:38px;border-radius:8px;color:var(--frost);font-weight:500;padding:0 6px}
+.seg button[aria-pressed="true"]{background:var(--blue);color:var(--ink);font-weight:600}
+.lbl{font-size:12.5px;color:var(--dim);margin:10px 0 6px;text-transform:uppercase;letter-spacing:.06em}
+ol.plan{margin:10px 0 0;padding:0;list-style:none;counter-reset:p;display:flex;flex-direction:column;gap:4px;max-height:220px;overflow:auto}
+ol.plan li{counter-increment:p;display:flex;gap:10px;align-items:center;font-size:14px;padding:6px 8px;border-radius:8px;background:var(--rink)}
+ol.plan li::before{content:counter(p);flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--deck2);font:600 13px/1 var(--num)}
+ol.plan li.now{outline:1px solid var(--blue)}
+ol.plan li.ok::before{background:var(--g);color:var(--ink)}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-top:10px}
+.card{background:var(--rink);border:1px solid var(--rule);border-radius:10px;padding:8px 10px;border-left:4px solid var(--dim)}
+.card .k{font-size:12px;color:var(--frost)}
+.card .v{font:600 24px/1.1 var(--num);font-variant-numeric:tabular-nums}
+.card.g{border-left-color:var(--g)}.card.y{border-left-color:var(--y)}.card.r{border-left-color:var(--r)}
+.res{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.big{font:700 34px/1 var(--num);font-variant-numeric:tabular-nums}
+table.hist{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}
+table.hist td,table.hist th{padding:6px 4px;border-bottom:1px solid var(--rule);text-align:left;font-weight:400}
+table.hist th{color:var(--dim);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+details{font-size:13.5px;color:var(--frost)}
+details summary{cursor:pointer;color:var(--ice);min-height:32px;display:flex;align-items:center}
+.note{font-size:12.5px;color:var(--dim);margin-top:14px}
+.stage.demo{min-height:72vh}
+#replay{position:absolute;inset:0;width:100%;height:100%;background:#000;object-fit:contain;z-index:3}
+.replaybar{position:absolute;left:10px;right:10px;bottom:10px;z-index:4;display:flex;gap:8px;justify-content:center}
+.parent{margin-top:10px;background:var(--rink);border:1px solid var(--rule);border-left:4px solid var(--blue);border-radius:10px;padding:10px 12px;font-size:14px}
+.parent .k{font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.exlist{display:grid;gap:6px;margin-top:8px}
+.exlist button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:8px 10px;min-height:44px;background:var(--rink);border:1px solid var(--rule);border-radius:10px;color:var(--ice)}
+.exlist button[aria-pressed="true"]{border-color:var(--blue);background:var(--deck2)}
+.exlist button small{color:var(--frost);font-size:12px}
+.exinfo{background:var(--rink);border:1px solid var(--rule);border-radius:10px;padding:10px 12px;margin-top:8px;font-size:13.5px}
+.exinfo h3{margin:0 0 6px;font:600 16px/1.2 var(--num);letter-spacing:.03em}
+.exinfo ul{margin:6px 0 0;padding-left:18px}
+#lvlTabs{grid-auto-columns:auto}
+#lvlTabs button{font-size:12.5px;padding:0 4px}
+.coach{background:var(--rink);border:1px solid var(--rule);border-radius:10px;padding:10px 12px;margin-top:8px;font-size:14px}
+.coach h3{margin:0 0 6px;font:600 16px/1.1 var(--num);letter-spacing:.04em}
+.coach p{margin:0 0 4px;color:var(--ice)}.coach p b{color:var(--frost);font-weight:500}
+.moments{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-top:8px}
+.moments button{display:block;padding:0;min-height:0;border-radius:10px;overflow:hidden;background:#000;text-align:left;white-space:normal}
+.moments img{display:block;width:100%;height:auto}
+.moments span{display:block;padding:6px 8px;font-size:12.5px;color:var(--ice);background:var(--deck2)}
+
+/* Schutz wie in ICE VISION: Sitzungsbalken, Wasserzeichen, Sichtschutz */
+.sess{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-6px 0 14px;font-size:13px;color:var(--frost)}
+.sess b{color:var(--ice);font-weight:600}.sess .sp{flex:1}.sess button{min-height:34px;font-size:13px}
+#wm{position:fixed;inset:-20%;z-index:50;pointer-events:none;display:grid;grid-template-columns:repeat(3,1fr);align-content:space-around;gap:110px 40px;transform:rotate(-22deg);opacity:.07;font:600 15px system-ui,sans-serif;color:#fff;white-space:nowrap;user-select:none}
+#veil{position:fixed;inset:0;z-index:60;background:var(--rink);display:grid;place-items:center;color:var(--frost);font-size:15px;text-align:center;padding:24px}
+</style>
+</head>
+<body>
+<div id="wm" aria-hidden="true"></div>
+<div id="veil" hidden>ICE VISION Parcours ist im Hintergrund.<br>Zurück zur App, um weiterzuarbeiten.</div>
+<div class="shell">
+  <header class="top">
+    <div class="logo" aria-hidden="true">IV</div>
+    <div class="brand"><h1>ICE VISION PARCOURS</h1><div class="sub">Parcours-Training Stickhandling</div></div>
+    <div class="status-pill" id="modelPillBox"><span id="modelPill">Erkennung lädt …</span></div>
+  </header>
+  <div class="sess" id="sess">
+    <span>Lizenziert für <b id="sessName">–</b></span>
+    <span id="sessLeft"></span>
+    <span class="sp"></span>
+    <button id="logout">Abmelden</button>
+  </div>
+
+  <div class="grid">
+    <main>
+      <div class="stage" id="stage">
+        <div class="empty" id="empty">
+          <p>Handy oder Laptop so aufstellen, dass das ganze Spielfeld und das Kind von Kopf bis Fuß im Bild sind.</p>
+          <div class="acts">
+            <button class="primary" id="camBtn">Kamera starten</button>
+            <label class="btn">Video aufnehmen<input type="file" id="rec" accept="video/*" capture="environment"></label>
+            <label class="btn">Video laden<input type="file" id="file" accept="video/*"></label>
+          </div>
+        </div>
+        <canvas id="c"></canvas>
+        <video id="v" playsinline muted></video>
+        <video id="replay" playsinline controls hidden></video>
+        <div class="replaybar" id="replayBar" hidden>
+          <button id="rpSlow" aria-pressed="false">Zeitlupe</button>
+          <button id="rpClose">Zurück zur Kamera</button>
+        </div>
+      </div>
+      <div class="stagebar" id="stagebar" hidden>
+        <button id="flipCam">Kamera wechseln</button>
+        <button id="mirror" aria-pressed="false">Spiegeln</button>
+        <button id="fs">Vollbild (TV)</button>
+        <button id="voice" aria-pressed="true">Sprache an</button>
+        <button id="freeze" aria-pressed="false">Bild einfrieren</button>
+      </div>
+      <div class="drawbar" id="drawbar" hidden>
+        <span class="k">Zeichnen</span>
+        <button class="col" data-col="#F7C23C" aria-pressed="false" aria-label="Gelb" style="background:#F7C23C"></button>
+        <button class="col" data-col="#FF5A4C" aria-pressed="false" aria-label="Rot" style="background:#FF5A4C"></button>
+        <button class="col" data-col="#3FBFEF" aria-pressed="false" aria-label="Blau" style="background:#3FBFEF"></button>
+        <button id="drUndo">Rückgängig</button>
+        <button id="drClear">Löschen</button>
+        <button id="drPath">Als Weg nehmen</button>
+      </div>
+      <div class="statusline" id="status" role="status" aria-live="polite"></div>
+    </main>
+
+    <aside class="board">
+      <section class="step cur" id="s0">
+        <h2><span class="n">1</span>Übung wählen</h2>
+        <div class="seg" id="lvlTabs">
+          <button data-l="1" aria-pressed="true">Anfänger</button>
+          <button data-l="2" aria-pressed="false">Fortgeschr.</button>
+          <button data-l="3" aria-pressed="false">Mittel</button>
+          <button data-l="4" aria-pressed="false">Halbprofi</button>
+          <button data-l="5" aria-pressed="false">Profi</button>
+        </div>
+        <div class="exlist" id="exList"></div>
+        <div class="exinfo" id="exInfo" hidden></div>
+      </section>
+
+      <section class="step off" id="s1">
+        <h2><span class="n">2</span>Spielfeld scannen</h2>
+        <p>Handy fest hinstellen, Spielfeld scannen. Die App erkennt Pucks, Stangen und den Ball und stellt die Übung selbst zusammen.</p>
+        <button class="primary" id="scanBtn" style="width:100%" disabled>Spielfeld scannen</button>
+        <div class="auto" id="autoTxt" hidden></div>
+        <ol class="plan" id="plan"></ol>
+        <div class="row" style="margin-top:10px">
+          <button id="demoBtn" disabled>Vorschau ansehen</button>
+          <button id="genBtn" disabled>Andere Übung</button>
+        </div>
+        <button id="startBtn" style="width:100%;margin-top:8px" disabled>Startpunkt setzen</button>
+        <details id="adjust" style="margin-top:10px">
+          <summary>Übung oder Bild selbst ändern</summary>
+          <div class="lbl">Übung</div>
+          <div class="seg" id="kindSeg">
+            <button data-kind="slalom" aria-pressed="true">Slalom</button>
+            <button data-kind="circle" aria-pressed="false">Umrunden</button>
+            <button data-kind="mix" aria-pressed="false">Mix</button>
+          </div>
+          <div class="lbl">Stufe</div>
+          <div class="seg" id="lvlSeg">
+            <button data-lvl="1" aria-pressed="false">Leicht</button>
+            <button data-lvl="2" aria-pressed="false">Mittel</button>
+            <button data-lvl="3" aria-pressed="true">Alle</button>
+          </div>
+          <div class="lbl">Im Bild korrigieren</div>
+          <div class="seg" id="toolSeg">
+            <button data-tool="puck" aria-pressed="false">Puck</button>
+            <button data-tool="bar" aria-pressed="false">Stange</button>
+            <button data-tool="start" aria-pressed="false">Start</button>
+            <button data-tool="ball" aria-pressed="false">Ball</button>
+            <button data-tool="del" aria-pressed="false">Entfernen</button>
+          </div>
+          <p id="toolTip" style="margin:8px 0 0"></p>
+          <p style="margin:8px 0 0">Eigenen Weg vormalen: „Bild einfrieren“, Farbe wählen, mit dem Finger den Weg des Pucks malen, dann „Als Weg nehmen“.</p>
+        </details>
+      </section>
+
+      <section class="step off" id="s3">
+        <h2><span class="n">3</span>Training</h2>
+        <p id="trainTxt">Runde 1 ist die <b>Messrunde</b>: Das Kind fährt die blaue Linie mit dem Ball in seinem eigenen Tempo. Danach läuft ein Tempo-Puck auf der Linie mit, dem das Kind folgt.</p>
+        <input type="text" id="player" placeholder="Spieler (Name oder Nummer, optional)" aria-label="Spieler">
+        <div id="paceBox">
+        <div class="lbl">Tempo-Puck nach der Messrunde</div>
+        <div class="seg" id="paceSeg">
+          <button data-pace="1" aria-pressed="true">Gleich</button>
+          <button data-pace="1.1" aria-pressed="false">+10 %</button>
+          <button data-pace="1.2" aria-pressed="false">+20 %</button>
+        </div>
+        <p id="paceInfo" style="margin:8px 0 0">Noch kein Tempo gemessen.</p>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button class="primary" id="goBtn" disabled>Messrunde starten</button>
+          <button id="stopBtn" disabled>Stopp</button>
+        </div>
+        <button id="remeasure" style="width:100%;margin-top:8px" disabled>Tempo neu messen</button>
+        <div class="cards" id="cards"></div>
+        <div class="parent" id="parent" hidden><div class="k">Eltern-Blick</div><div id="parentTxt"></div></div>
+      </section>
+
+      <section class="step off" id="s4">
+        <h2><span class="n">4</span>Auswertung</h2>
+        <div id="result"><p>Noch kein Durchgang.</p></div>
+        <div class="lbl">Verlauf</div>
+        <div id="hist"><p>Noch keine Durchgänge gespeichert.</p></div>
+      </section>
+
+      <details>
+        <summary>Anleitung und Hintergrund</summary>
+        <p><b>Aufbau.</b> Kamera fest aufstellen (Stativ oder TV), leicht erhöht, so dass der ganze Boden mit allen Hindernissen zu sehen ist. Der Boden sollte hell sein, Pucks und Stangen dunkel oder farbig.</p>
+        <p><b>Ablauf.</b> Aus den erkannten Hindernissen erstellt die App einen Weg für den Puck: Slalom (abwechselnd links und rechts vorbei), Umrunden (einmal um jeden Puck) oder Mix. Bei einer Stange wird der Puck darunter durchgespielt. „Neu erstellen“ würfelt Reihenfolge und Seiten neu.</p>
+        <p><b>Ball und Linie.</b> Die App verfolgt den Ball über seine Farbe (beim Scan erkannt oder mit „Ball“ angetippt). Ein Punkt im Ablauf zählt, wenn der Ball dort ankommt, und nur in der richtigen Reihenfolge. Wie genau der Ball auf der Linie lief, steht in der Auswertung. Ohne erkannten Ball zählen die Füße des Kindes.</p>
+        <p><b>Skelett und Blick.</b> Über dem Kind liegt ein dezentes Skelett mit den Winkeln an Knien und Ellbogen (Knie in Ampelfarbe). Der Pfeil am Kopf zeigt, wohin das Kind schaut.</p>
+        <p><b>Vorschau statt Linien.</b> Vor dem Start zeigt die App die Übung 7 Sekunden lang vor (zweimal): Ein Ball fährt den Weg, dazu die wichtigsten Punkte. Während der Übung blendet sie immer nur die nächsten 2 Sekunden ein. So schaut das Kind nach vorn auf den Bildschirm und nicht auf den Ball.</p>
+        <p><b>Tempo.</b> Die Messrunde legt das Tempo des Kindes fest. In den Trainingsrunden läuft ein Tempo-Puck mit, gleich schnell oder 10 bzw. 20 % schneller. Die Geschwindigkeit in m/s ist eine Schätzung aus der Puckgröße im Bild.</p>
+        <p><b>Für Eltern.</b> Während der Runde zeigt der Eltern-Blick, worauf du gerade achten solltest. Danach gibt es die Wiederholung (auch in Zeitlupe), Momente zum Besprechen und für die zwei wichtigsten Punkte einen Satz zum Sagen und eine kleine Übung.</p>
+        <p><b>Auf dem TV.</b> Handy aufs Stativ, App öffnen, dann den Bildschirm per AirPlay, Smart View oder Chromecast auf den Fernseher spiegeln und „Vollbild“ tippen. So sieht das Kind die Linie groß vor sich.</p>
+        <p><b>Haltung.</b> Gemessen wird aus der 3D-Schätzung der Erkennung: Kniebeugung, Oberkörper-Vorlage, Kopf hoch, Abstand der Hände am Schläger und Standbreite. Die Grenzwerte sind Arbeitswerte für Kinder und keine Normwerte. Ist ein Wert länger rot, kommt ein kurzer Hinweis.</p>
+        <p>Winkel aus einem 2D-Video sind eine Orientierung fürs Coaching, keine Labormessung. Aufnahmen von Kindern nur mit Einverständnis der Eltern. Das Video verlässt das Gerät nicht.</p>
+      </details>
+    </aside>
+  </div>
+</div>
+
+<script type="module">
+/* Die Erkennung wird erst beim Start nachgeladen. Ist sie nicht erreichbar, laufen Scan und Ablauf trotzdem. */
+const VISION = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
+const WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
+const MODEL = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task";
+
+const $ = id => document.getElementById(id);
+
+/*IV-CORE*/
+const IV_PUB = /*IV-PUB*/"";
+/* ---------- Sitzung ----------
+   Die geschuetzte Ausgabe setzt PROTECTED auf true. Dann laeuft die App nur, wenn der
+   Sperrbildschirm sie nach einem gueltigen Freischaltcode gestartet hat. */
+const PROTECTED = /*IV-PROTECTED*/false;
+const SESSION = (() => {
+  let s = window.__IV_SESSION || null;
+  if(!s){ try{ s = JSON.parse(sessionStorage.getItem("ivp-live") || "null"); }catch(e){} }
+  if(s && s.name) return s;
+  if(PROTECTED) return null;
+  return {name:"VORSCHAU – nicht weitergeben", sid:"VORSCHAU", exp:null, preview:true};
+})();
+function refuse(){
+  document.body.innerHTML = '<p style="padding:40px;text-align:center;font:16px system-ui;color:#EDF5FD">Keine gültige Sitzung. Bitte ICE VISION Parcours neu öffnen und mit Freischaltcode anmelden.</p>';
+  throw new Error("Keine Sitzung");
+}
+if(!SESSION) refuse();
+/* Die geschuetzte App prueft die Unterschrift des Codes selbst. Name und Ablauf kommen nur aus dem
+   unterschriebenen Code. So laesst sich das Wasserzeichen auch in einer herauskopierten App nicht faelschen. */
+if(PROTECTED){
+  try{
+    if(typeof IVC === "undefined" || !IV_PUB || !SESSION.code || !SESSION.c) refuse();
+    const pc = IVC.parseCode(SESSION.code);
+    const pk = await crypto.subtle.importKey("raw", IVC.b64uDec(IV_PUB), {name:"ECDSA", namedCurve:"P-256"}, false, ["verify"]);
+    const good = await crypto.subtle.verify({name:"ECDSA", hash:"SHA-256"}, pk, pc.sig, pc.body);
+    if(!good || IVC.b64uEnc(pc.challenge) !== SESSION.c || Date.now() >= pc.exp) refuse();
+    SESSION.name = pc.name; SESSION.exp = pc.exp; SESSION.sid = IVC.chToText(pc.challenge);
+  }catch(e){ refuse(); }
+}
+const WM_TEXT = "ICE VISION Parcours · " + SESSION.name + " · " + SESSION.sid;
+function logout(){
+  try{ sessionStorage.removeItem("ivp-live"); sessionStorage.removeItem("ivp-shell"); }catch(e){}
+  window.__IV_SESSION = null;
+  location.reload();
+}
+function sessionTick(){
+  if(!SESSION.exp){ $("sessLeft").textContent = SESSION.preview ? "· Vorschau ohne Schutz" : ""; return; }
+  const left = SESSION.exp - Date.now();
+  if(left <= 0){ logout(); return; }
+  const min = Math.ceil(left/60000);
+  $("sessLeft").textContent = "· noch " + (min >= 60 ? Math.floor(min/60) + " Std. " + (min%60) + " Min." : min + " Min.");
+}
+/* Offene Version (ohne Schutz): kein Sitzungsbalken, kein Wasserzeichen, keine Sperren. */
+const OPEN = !PROTECTED;
+if(OPEN){ $("sess").hidden = true; $("wm").hidden = true; }
+else{
+$("sessName").textContent = SESSION.name;
+$("logout").onclick = logout;
+sessionTick(); setInterval(sessionTick, 15000);
+}
+
+/* Wasserzeichen ueber der ganzen Seite: erscheint auf jeder Bildschirmaufnahme. */
+if(!OPEN) (function(){
+  const box = $("wm"), stamp = WM_TEXT + " · " + new Date().toLocaleString("de-DE", {day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit"});
+  for(let i=0;i<18;i++){ const d = document.createElement("div"); d.textContent = stamp; box.appendChild(d); }
+})();
+
+/* Kopier- und Speicherwege so weit erschweren, wie es ein Browser zulaesst. */
+if(!OPEN){
+document.addEventListener("contextmenu", e => { if(!/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) e.preventDefault(); });
+document.addEventListener("dragstart", e => e.preventDefault());
+document.addEventListener("copy", e => { if(!/^(INPUT|TEXTAREA)$/.test((e.target||{}).tagName)) e.preventDefault(); });
+document.addEventListener("keydown", e => {
+  const k = (e.key || "").toLowerCase(), mod = e.ctrlKey || e.metaKey;
+  if(e.key === "F12" || (mod && ["s","u","p"].includes(k)) || (mod && e.shiftKey && ["i","j","c"].includes(k))){
+    e.preventDefault(); e.stopPropagation();
+  }
+}, true);
+/* Sichtschutz: Wechselt das Handy in eine andere App oder die App-Uebersicht, wird der Inhalt verdeckt. */
+function veil(on){
+  $("veil").hidden = !on;
+  if(on){ try{ document.getElementById("v").pause(); try{ speechSynthesis.cancel(); }catch(err){} }catch(e){} }
+}
+document.addEventListener("visibilitychange", () => veil(document.visibilityState === "hidden"));
+window.addEventListener("pagehide", () => veil(true));
+window.addEventListener("beforeprint", () => veil(true));
+window.addEventListener("afterprint", () => veil(false));
+}
+
+/* ---------- App ---------- */
+const D = 180/Math.PI, VIS = 0.4, VIS_HAND = 0.2;
+const cv = $("c"), ctx = cv.getContext("2d"), video = $("v");
+const setStatus = t => { $("status").textContent = t; };
+
+/* ---------- Zustand ---------- */
+let landmarker = null, stream = null, facing = "environment", fileMode = false;
+let W = 0, H = 0, mirror = false, voiceOn = true;
+let obstacles = [];          // {type:"puck", x,y,r} oder {type:"bar", x1,y1,x2,y2}
+let start = null;            // {x,y}
+let tool = null, barFirst = null;
+let kind = "slalom", level = 3, plan = null; // plan: {pts, steps:[{text, cp:{x,y}}]}
+let demo = null;             // {t0, dur}
+let preview = null;          // {t0, loops}: 7-Sekunden-Vorschau der Uebung
+const PREV_MS = 7000;
+let phase = "idle";          // idle | approach | calib | count | run | done
+let phaseT = 0, cpIdx = 0, runT0 = 0, runEnd = 0;
+let pose = null, poseT = 0, headZero = 0;
+let stats = null, hint = null, lastHintAt = 0, redSince = {}, hintCool = {};
+let ballCol = null, ballPos = null, ballT = 0, scanBall = null, trail = [], progIdx = 0;
+let frozen = null, drawCol = null, strokes = [], curStroke = null;
+const frameSrc = () => frozen || video;
+let pace = null, paceF = 1, rec = null, recChunks = [], clipURL = null, moments = {}, momentAt = {};
+
+/* ---------- Baukasten: Uebungen aus Dons Vorfuehrvideos ----------
+   type "station": Kind bleibt an einem Ort, die App zaehlt die Seitenwechsel des Balls, misst die Breite
+   (in Schulterbreiten) und ob die Fuesse ruhig bleiben. type "route": Weg um die gescannten Pucks.
+   Neue Uebung = ein neuer Eintrag hier plus Video im Ordner uebungen/. */
+const LEVELS = ["", "Anfänger", "Fortgeschritten", "Mittel", "Halbprofi", "Profi"];
+const EXERCISES = [
+  {id:"e244", lvl:1, title:"Figure 8 – Achter um 2 Pucks", type:"route", kind:"eight", laps:3, video:"uebungen/e244.mp4",
+   setup:"Zwei Pucks etwa schulterbreit nebeneinander vor das Kind legen, Ball dazwischen.",
+   points:["Untere Hand locker", "Gewicht vom linken auf den rechten Fuß verlagern", "Kopf hoch, Blick nach vorn"]},
+  {id:"e230", lvl:1, title:"Wide Dribble – seitlich an der Hürde", type:"station", secs:30, width:1.2, feetStill:true, video:"uebungen/e230.mp4",
+   setup:"Hürde (Stange auf Ständer) vor das Kind stellen, Ball seitlich daneben.",
+   points:["Ball von links nach rechts vor der Hürde führen", "Füße bleiben stehen", "Knie gebeugt, Oberkörper leicht vor"]},
+  {id:"e234", lvl:2, title:"Reach Dribble – Ball weit vom Körper", type:"station", secs:30, width:1.6, feetStill:true, video:"uebungen/e234.mp4",
+   setup:"Hürde vor dem Kind, viel Platz zu beiden Seiten.",
+   points:["Ball weit nach außen führen, Arme lang", "Schläger weg vom Körper, nicht am Körper kleben", "Füße bleiben stehen"]},
+  {id:"e236", lvl:2, title:"Cross-Over – Hand rüber an der Hürde", type:"station", secs:30, width:1.4, feetStill:true, video:"uebungen/e236.mp4",
+   setup:"Hürde vor dem Kind, Ball links oder rechts davon.",
+   points:["Rechte Hand rüber auf die andere Seite", "Ball eng an der Hürde vorbei", "Kopf hoch"]},
+  {id:"e247", lvl:2, title:"Figure 8 – Achter um 4 Pucks", type:"route", kind:"eight", laps:2, video:"uebungen/e247.mp4",
+   setup:"Vier Pucks als Viereck vor das Kind legen.",
+   points:["Eng um jeden Puck", "Hände locker, Ball vor dem Körper", "Gewicht mitnehmen"]},
+  {id:"e237", lvl:3, title:"Lateral Reach – Hand raus mit Ausfallschritt", type:"station", secs:30, width:1.8, feetStill:false, video:"uebungen/e237.mp4",
+   setup:"Hürde vor dem Kind, Platz für einen weiten Schritt zur Seite.",
+   points:["Richtig Hand raus, Arm lang", "Weiter Schritt zur Seite mit gebeugtem Knie", "Ball unter Kontrolle zurückholen"]},
+  {id:"e240", lvl:3, title:"Toe-Drag – rüber, weg, ranziehen", type:"station", secs:30, width:1.4, feetStill:true, video:"uebungen/e240.mp4",
+   setup:"Hürde vor dem Kind, Ball an der Seite.",
+   points:["Ball rüber, weg vom Körper, ranziehen, wieder rüber", "Füße bleiben stehen", "Rhythmus halten"]},
+  {id:"e249", lvl:4, title:"Low Stance – Achter um 5 Pucks", type:"route", kind:"eight", laps:2, video:"uebungen/e249.mp4",
+   setup:"Fünf Pucks verteilt vor das Kind legen.",
+   points:["Tiefe Eishockeyposition", "Hände bleiben unten und locker", "Gewicht von links nach rechts verlagern"]},
+  {id:"e242", lvl:4, title:"Toe-Drag in Bewegung – anfahren und um die Hürde", type:"station", secs:30, width:1.4, feetStill:false, video:"uebungen/e242.mp4",
+   setup:"Hürde in die Mitte, das Kind startet ein paar Schritte davor.",
+   points:["Mit Ball auf die Hürde zu", "Ball seitlich um die Hürde ziehen", "Kopf hoch, Tempo halten"]},
+  {id:"e251", lvl:5, title:"Puck-Parcours – Achter um 6 Pucks", type:"route", kind:"eight", laps:2, video:"uebungen/e251.mp4",
+   setup:"Sechs Pucks in zwei Reihen vor das Kind legen.",
+   points:["Eng um alle Pucks", "Tiefe Position halten", "Kopf hoch trotz Tempo"]}
+];
+let ex = null, exLvl = 1;
+const station = () => ex && ex.type === "station";
+let sx = null; // Zaehler fuer Stand-Uebungen
+
+/* ---------- Geometrie ---------- */
+const dist = (a,b) => Math.hypot(a.x-b.x, a.y-b.y);
+const sub3 = (a,b) => [a.x-b.x, a.y-b.y, a.z-b.z];
+const dot3 = (a,b) => a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const len3 = a => Math.hypot(a[0],a[1],a[2]);
+function ang3(a,b,c){ const u = sub3(a,b), v = sub3(c,b), d = len3(u)*len3(v); return d ? Math.acos(Math.max(-1,Math.min(1,dot3(u,v)/d)))*D : NaN; }
+const mid3 = (a,b) => ({x:(a.x+b.x)/2, y:(a.y+b.y)/2, z:(a.z+b.z)/2});
+const X = x => mirror ? W - x : x;   // Bildkoordinate -> Anzeige
+
+/* ---------- Spielfeld-Scan ----------
+   Heller, wenig gesaettigter Boden wird von unten her zusammenhaengend gefuellt. Was dunkel ist und ganz
+   vom Boden umschlossen wird, ist ein Hindernis: rund = Puck, lang und duenn = Stange. Waende und Bande
+   haengen am oberen Bildrand und fallen deshalb heraus. */
+function scanField(){
+  const sw = 320, sh = Math.round(H*sw/W), k = W/sw;
+  const oc = document.createElement("canvas"); oc.width = sw; oc.height = sh;
+  const oc2 = oc.getContext("2d", {willReadFrequently:true});
+  oc2.drawImage(frameSrc(), 0, 0, sw, sh);
+  const px = oc2.getImageData(0, 0, sw, sh).data, n = sw*sh;
+  const L = new Float32Array(n), S = new Float32Array(n);
+  for(let i=0;i<n;i++){ const r = px[i*4], g = px[i*4+1], b = px[i*4+2]; L[i] = .299*r+.587*g+.114*b; S[i] = Math.max(r,g,b)-Math.min(r,g,b); }
+  // Bodenhelligkeit aus dem unteren Bilddrittel
+  const smp = [];
+  for(let y=Math.floor(sh*.7);y<sh;y+=2) for(let x=Math.floor(sw*.15);x<sw*.85;x+=2) smp.push(L[y*sw+x]);
+  smp.sort((a,b)=>a-b); const ref = smp[Math.floor(smp.length*.6)] || 200;
+  const isFloor = i => L[i] > ref*0.72 && S[i] < 55;
+  // Boden von unten fuellen
+  const F = new Uint8Array(n), q = new Int32Array(n); let qh = 0, qt = 0;
+  for(let y=sh-3;y<sh;y++) for(let x=0;x<sw;x++){ const i = y*sw+x; if(isFloor(i) && !F[i]){ F[i] = 1; q[qt++] = i; } }
+  while(qh < qt){
+    const i = q[qh++], x = i % sw, y = (i/sw)|0;
+    const nb = [x>0?i-1:-1, x<sw-1?i+1:-1, y>0?i-sw:-1, y<sh-1?i+sw:-1];
+    for(const j of nb) if(j >= 0 && !F[j] && isFloor(j)){ F[j] = 1; q[qt++] = j; }
+  }
+  // Nicht-Boden, der oben am Bildrand haengt = Wand und Decke. Seitlich darf ein Hindernis aus dem Bild ragen.
+  const O = new Uint8Array(n); qh = qt = 0;
+  for(let x=0;x<sw;x++){ const i = x; if(!F[i] && !O[i]){ O[i]=1; q[qt++]=i; } }
+  while(qh < qt){
+    const i = q[qh++], x = i % sw, y = (i/sw)|0;
+    const nb = [x>0?i-1:-1, x<sw-1?i+1:-1, y>0?i-sw:-1, y<sh-1?i+sw:-1];
+    for(const j of nb) if(j >= 0 && !F[j] && !O[j]){ O[j] = 1; q[qt++] = j; }
+  }
+  // Person aus dem Scan nehmen
+  let pb = null;
+  if(pose && pose.img){
+    const xs = [], ys = [];
+    pose.img.forEach(p => { if(p.vis > .3){ xs.push(p.x/k); ys.push(p.y/k); } });
+    if(xs.length > 6){
+      const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys), wx = (x1-x0), wy = (y1-y0);
+      pb = {x0:x0-wx*.2, x1:x1+wx*.2, y0:y0-wy*.1, y1:y1+wy*.08};
+    }
+  }
+  scanBall = null;
+  // Loecher im Boden einzeln auswerten
+  const seen = new Uint8Array(n), found = [];
+  const minA = Math.max(6, n*0.00006), maxA = n*0.03;
+  for(let s=0;s<n;s++){
+    if(F[s] || O[s] || seen[s]) continue;
+    const pix = []; qh = qt = 0; q[qt++] = s; seen[s] = 1;
+    while(qh < qt){
+      const i = q[qh++]; pix.push(i); const x = i % sw, y = (i/sw)|0;
+      const nb = [x>0?i-1:-1, x<sw-1?i+1:-1, y>0?i-sw:-1, y<sh-1?i+sw:-1];
+      for(const j of nb) if(j >= 0 && !F[j] && !O[j] && !seen[j]){ seen[j] = 1; q[qt++] = j; }
+    }
+    if(pix.length < minA || pix.length > maxA) continue;
+    let mx = 0, my = 0, ml = 0, ms = 0, bx0 = sw, bx1 = 0, by0 = sh, by1 = 0, mr = 0, mgg = 0, mb = 0;
+    for(const i of pix){ const x = i % sw, y = (i/sw)|0; mx += x; my += y; ml += L[i]; ms += S[i]; mr += px[i*4]; mgg += px[i*4+1]; mb += px[i*4+2]; if(x<bx0)bx0=x; if(x>bx1)bx1=x; if(y<by0)by0=y; if(y>by1)by1=y; }
+    // Sehr hohe Teile und alles am unteren Rand (Stativ, Fuesse der filmenden Person) auslassen
+    if(by1-by0 > sh*.45 || by1 >= sh-1) continue;
+    mx /= pix.length; my /= pix.length; ml /= pix.length; ms /= pix.length;
+    // Im Bereich des Kindes nur einen farbigen Fleck unten an den Fuessen zulassen: der Ball am Schlaeger
+    if(pb && mx > pb.x0 && mx < pb.x1 && my > pb.y0 && my < pb.y1 && !(ms > 70 && ml >= ref*.55 && my > pb.y0 + (pb.y1-pb.y0)*.6)) continue;
+    // Hauptachsen
+    let cxx = 0, cyy = 0, cxy = 0;
+    for(const i of pix){ const dx = i % sw - mx, dy = ((i/sw)|0) - my; cxx += dx*dx; cyy += dy*dy; cxy += dx*dy; }
+    cxx /= pix.length; cyy /= pix.length; cxy /= pix.length;
+    const tr = cxx+cyy, det = cxx*cyy-cxy*cxy, l1 = tr/2+Math.sqrt(Math.max(0,tr*tr/4-det)), l2 = Math.max(.05, tr/2-Math.sqrt(Math.max(0,tr*tr/4-det)));
+    const elong = Math.sqrt(l1/l2), th = 0.5*Math.atan2(2*cxy, cxx-cyy);
+    const dark = ml < ref*0.55, colored = ms > 60;
+    // Fuellgrad: ein Puck fuellt seine Huelle fast ganz, eine Stange mit Fuessen oder Boegen nur wenig
+    const fill = pix.length / ((bx1-bx0+1)*(by1-by0+1));
+    const ca = Math.cos(th), sa = Math.sin(th);
+    if((elong > 4.5 || (fill < .35 && elong > 1.8)) && (dark || colored || ml < ref*0.75) && pix.length > minA*2){
+      let t0 = Infinity, t1 = -Infinity;
+      for(const i of pix){ const t = (i % sw - mx)*ca + (((i/sw)|0) - my)*sa; if(t<t0)t0=t; if(t>t1)t1=t; }
+      found.push({type:"bar", x1:(mx+ca*t0)*k, y1:(my+sa*t0)*k, x2:(mx+ca*t1)*k, y2:(my+sa*t1)*k});
+    }else if(elong < 3.2 && fill > .45 && !dark && ms > 70){
+      // kraeftig farbig und rund: der Ball
+      const c = {x:mx*k, y:my*k, r:mr/pix.length, g:mgg/pix.length, b:mb/pix.length, s:ms};
+      if(!scanBall || c.s > scanBall.s) scanBall = c;
+    }else if(elong < 3.2 && fill > .45 && dark){
+      found.push({type:"puck", x:mx*k, y:my*k, r:Math.max(6, Math.sqrt(pix.length/Math.PI)*k)});
+    }
+  }
+  // Stange und Rohr einer Huerde liegen dicht nebeneinander: zu einer Stange zusammenfassen
+  const bars = found.filter(o => o.type === "bar"), rest = found.filter(o => o.type !== "bar"), merged = [];
+  const angOf = b => Math.atan2(b.y2-b.y1, b.x2-b.x1);
+  for(const b of bars){
+    const m = merged.find(c => {
+      let da = Math.abs(angOf(b) - angOf(c)) % Math.PI; da = Math.min(da, Math.PI - da);
+      const cl = Math.hypot(c.x2-c.x1, c.y2-c.y1) || 1, ux = (c.x2-c.x1)/cl, uy = (c.y2-c.y1)/cl;
+      const bx = (b.x1+b.x2)/2 - c.x1, by = (b.y1+b.y2)/2 - c.y1, along = bx*ux + by*uy, across = Math.abs(-bx*uy + by*ux);
+      return da < .3 && across < W*.06 && along > -W*.25 && along < cl + W*.25;
+    });
+    if(!m){ merged.push({...b}); continue; }
+    const ca = Math.cos(angOf(m)), sa = Math.sin(angOf(m)), pts = [[m.x1,m.y1],[m.x2,m.y2],[b.x1,b.y1],[b.x2,b.y2]];
+    const t = pts.map(p => (p[0]-m.x1)*ca + (p[1]-m.y1)*sa), lo = pts[t.indexOf(Math.min(...t))], hi = pts[t.indexOf(Math.max(...t))];
+    m.x1 = lo[0]; m.y1 = lo[1]; m.x2 = hi[0]; m.y2 = hi[1];
+  }
+  return rest.concat(merged);
+}
+
+/* ---------- Ablauf erstellen ----------
+   Der Weg beschreibt, wo der Puck laufen soll. Reihenfolge: immer zum naechsten Hindernis.
+   Abstand zum Puck waechst mit der Puckgroesse im Bild, also mit der Naehe zur Kamera. */
+function rnd(seed){ let s = seed >>> 0; return () => (s = (s*1664525 + 1013904223) >>> 0) / 4294967296; }
+let seed = 1;
+// Liegt ein Punkt auf einem Hindernis?
+function onObstacle(p, pad){
+  return obstacles.some(o => {
+    if(o.type === "puck") return dist(o,p) < o.r + pad;
+    const vx = o.x2-o.x1, vy = o.y2-o.y1, t = Math.max(0,Math.min(1,((p.x-o.x1)*vx+(p.y-o.y1)*vy)/(vx*vx+vy*vy||1)));
+    return Math.hypot(o.x1+vx*t-p.x, o.y1+vy*t-p.y) < pad;
+  });
+}
+/* Start: wo das Kind beim Scan steht. Sonst aus Sicht des Spielers: Das Kind schaut zur Kamera und startet
+   hinter dem Parcours (im Bild oberhalb der Hindernisse), nie auf einem Hindernis. */
+function defaultStart(){
+  const pad = Math.max(W*.06, legLen()*.55), f = feet();
+  if(f && !onObstacle(f, pad*.6)) return {x:f.x, y:f.y};
+  const ps = obstacles.flatMap(o => o.type === "puck" ? [o] : [{x:o.x1, y:o.y1}, {x:o.x2, y:o.y2}]);
+  if(!ps.length) return {x:W/2, y:H*.85};
+  const mx0 = ps.reduce((a,p)=>a+p.x,0)/ps.length, top = Math.min(...ps.map(p => p.y)), my0 = Math.max(...ps.map(p => p.y));
+  for(const c of [{x:mx0, y:top - H*.08}, {x:mx0, y:top - H*.04}, {x:mx0 - W*.25, y:top}, {x:mx0 + W*.25, y:top}, {x:mx0, y:my0 + H*.12}]){
+    const q = {x:Math.max(pad, Math.min(W-pad, c.x)), y:Math.max(H*.3, Math.min(H*.95, c.y))};
+    if(!onObstacle(q, pad)) return q;
+  }
+  const my = Math.max(...ps.map(p => p.y)), mx = ps.reduce((a,p)=>a+p.x,0)/ps.length;
+  if(kind === "eight"){ const f = feet(); if(f) return {x:f.x, y:f.y}; return {x:mx, y:Math.max(H*.05, Math.min(...ps.map(p => p.y)) - H*.07)}; }
+  return {x:mx, y:Math.min(H*.95, my + H*.12)};
+}
+/* Die App waehlt die Uebung selbst: Pucks in einer Reihe -> Slalom, wenige verstreute -> Umrunden,
+   viele verstreute -> Mix. Eine Stange wird immer unterspielt. Alle Hindernisse kommen dran. */
+function autoExercise(){
+  const ps = obstacles.filter(o => o.type === "puck"), nb = obstacles.length - ps.length;
+  if(ex && ex.type === "route"){
+    kind = ex.kind; level = 3;
+    autoInfo = `<b>${ex.title}</b> (${LEVELS[ex.lvl]}): ${ex.laps} ${ex.laps === 1 ? "Runde" : "Runden"} um ${ps.length} ${ps.length === 1 ? "Puck" : "Pucks"}.${ps.length < 2 ? " Für den Achter mindestens 2 Pucks hinlegen." : ""}`;
+    return;
+  }
+  let k = "slalom";
+  if(ps.length >= 3){
+    const mx = ps.reduce((a,p)=>a+p.x,0)/ps.length, my = ps.reduce((a,p)=>a+p.y,0)/ps.length;
+    let sxx = 0, syy = 0, sxy = 0; ps.forEach(p => { sxx += (p.x-mx)**2; syy += (p.y-my)**2; sxy += (p.x-mx)*(p.y-my); });
+    const tr = sxx + syy, dt = sxx*syy - sxy*sxy, l1 = tr/2 + Math.sqrt(Math.max(0, tr*tr/4 - dt)), l2 = tr/2 - Math.sqrt(Math.max(0, tr*tr/4 - dt));
+    const line = l1 > 0 && Math.sqrt(Math.max(0,l2)/l1) < .4;
+    k = line ? "slalom" : ps.length <= 4 ? "circle" : "mix";
+  }else if(ps.length) k = "circle";
+  kind = k; level = 3;
+  document.querySelectorAll("#kindSeg button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.kind === kind)));
+  document.querySelectorAll("#lvlSeg button").forEach(x => x.setAttribute("aria-pressed", String(+x.dataset.lvl === level)));
+  const name = {slalom:"Slalom", circle:"Umrunden", mix:"Mix aus Slalom und Umrunden"}[k];
+  const why = !ps.length ? "" : k === "slalom" ? "die Pucks in einer Reihe liegen" : k === "circle" ? "die Pucks verstreut liegen" : "viele Pucks verstreut liegen";
+  autoInfo = `<b>Übung: ${name}</b>${ps.length ? ` um ${ps.length} ${ps.length === 1 ? "Puck" : "Pucks"}` : ""}${nb ? `, ${nb === 1 ? "einmal" : nb + "-mal"} unter der Stange durch` : ""}.${why ? ` Gewählt, weil ${why}.` : ""} Mit „Vorspielen“ fährt ein Puck den Weg einmal vor.`;
+}
+let autoInfo = "";
+// Puck-Nummer aus Sicht des Kindes von links nach rechts (es schaut zur Kamera; fuer den Achter, Pucks kommen mehrfach dran)
+function plan0Num(o){ const ps = obstacles.filter(q => q.type === "puck").sort((a,b) => b.x - a.x); return ps.indexOf(o) + 1; }
+function buildPlan(){
+  if(!start) start = defaultStart();
+  const R = rnd(seed), maxN = [0,4,7,99][level];
+  let todo = obstacles.map((o,i) => ({o, i, c: o.type === "puck" ? {x:o.x,y:o.y} : {x:(o.x1+o.x2)/2, y:(o.y1+o.y2)/2}}));
+  // Bei "Neu erstellen" ein anderes erstes Hindernis, sonst immer das naechste
+  let order = []; let cur = start;
+  if(kind === "eight"){
+    // Achter: Pucks aus Sicht des Kindes von links nach rechts, abwechselnd links und rechts herum, mehrere Runden
+    const ps = todo.filter(t => t.o.type === "puck").sort((a,b) => b.c.x - a.c.x);
+    const one = ps.concat(ps.slice(1, -1).reverse());
+    for(let l=0; l < (ex && ex.laps || 2); l++) order = order.concat(one);
+    if(ps.length === 1) order = ps;
+  }else
+  while(todo.length && order.length < maxN){
+    todo.sort((a,b) => dist(a.c,cur) - dist(b.c,cur));
+    const pick = order.length === 0 && seed > 1 ? Math.floor(R()*Math.min(3,todo.length)) : 0;
+    const nx = todo.splice(pick,1)[0]; order.push(nx); cur = nx.c;
+  }
+  const pts = [{x:start.x, y:start.y}], steps = [];
+  let side = R() < .5 ? 1 : -1;
+  order.forEach((it, j) => {
+    const prev = pts[pts.length-1], next = order[j+1] ? order[j+1].c : start;
+    let dx = next.x - prev.x, dy = next.y - prev.y; const dl = Math.hypot(dx,dy) || 1; dx /= dl; dy /= dl;
+    const nxv = -dy, nyv = dx;
+    const num = j+1;
+    if(it.o.type === "bar"){
+      const o = it.o, bx = o.x2-o.x1, by = o.y2-o.y1, bl = Math.hypot(bx,by) || 1;
+      let px = -by/bl, py = bx/bl; if((prev.x-it.c.x)*px + (prev.y-it.c.y)*py > 0){ px = -px; py = -py; }
+      const off = Math.max(bl*.35, W*.05);
+      pts.push({x:it.c.x + px*off, y:it.c.y + py*off});
+      pts.push({x:it.c.x - px*off, y:it.c.y - py*off});
+      steps.push({text:"Puck unter der Stange durchspielen", cp:pts[pts.length-1], ref:it.c});
+      return;
+    }
+    const o = it.o, off = Math.max(o.r*2.6, W*.045);
+    let mode = kind === "mix" ? (R() < .4 ? "circle" : "slalom") : kind === "eight" ? "circle" : kind;
+    if(mode === "slalom"){
+      const p = {x:o.x + side*nxv*off, y:o.y + side*nyv*off};
+      pts.push(p);
+      // Seite aus Sicht des Kindes: es schaut zur Kamera, rechts im Bild ist also seine linke Seite
+      steps.push({text:`Puck ${num} ${p.x > o.x ? "links" : "rechts"} umspielen`, cp:p, ref:o});
+      side = -side;
+    }else{
+      const dir = kind === "eight" ? (j % 2 ? -1 : 1) : R() < .5 ? 1 : -1;
+      const a0 = kind === "eight" ? Math.atan2(prev.y - o.y, prev.x - o.x) : Math.atan2(side*nyv, side*nxv);
+      for(let s=0;s<=4;s++){ const a = a0 + dir*s*Math.PI/2; pts.push({x:o.x + Math.cos(a)*off, y:o.y + Math.sin(a)*off}); }
+      const pn = plan0Num(o);
+      // Achter: der Punkt zaehlt, sobald der Ball aussen am Puck vorbei ist (Seite weg vom vorigen Puck)
+      const zone = kind === "eight" ? {x:o.x, y:o.y, side: (o.x - prev.x) >= 0 ? 1 : -1, r:off} : null;
+      steps.push({text: kind === "eight" ? `Um Puck ${pn} ${dir > 0 ? "rechts" : "links"} herum` : `Einmal um Puck ${num} herum`, cp: zone ? {x:o.x + zone.side*off, y:o.y} : pts[pts.length-3], ref:o, zone});
+    }
+  });
+  if(kind === "eight" && order.length > 1){
+    // Achter endet mit dem Ball in der Mitte zwischen den Pucks
+    const mid = {x:order.reduce((q,it) => q + it.c.x, 0)/order.length, y:order.reduce((q,it) => q + it.c.y, 0)/order.length};
+    pts.push(mid);
+    steps.push({text:"Ball zurück in die Mitte", cp:mid, ref:mid});
+  }else{
+  pts.push({x:start.x, y:start.y});
+  steps.push({text:"Zurück in den Startkreis", cp:{x:start.x, y:start.y}, ref:start});
+  }
+  plan = {pts, path:spline(pts), steps, order};
+  renderPlan();
+}
+/* Selbst gemalter Weg: der Strich wird zur blauen Linie, Start ist sein Anfang */
+function planFromStroke(st){
+  const raw = st.pts, step = W*.025, pts = [raw[0]];
+  raw.forEach(p => { if(dist(p, pts[pts.length-1]) >= step) pts.push({x:p.x, y:p.y}); });
+  if(dist(raw[raw.length-1], pts[pts.length-1]) > step*.3) pts.push(raw[raw.length-1]);
+  if(pts.length < 3) return false;
+  start = {x:pts[0].x, y:pts[0].y, manual:true};
+  const path = spline(pts), n = Math.max(2, Math.min(6, Math.round(path.total/(W*.25)))), steps = [];
+  for(let i=1;i<=n;i++){ const cp = pathAt(path, path.total*i/n); steps.push({text: i < n ? `Auf der gemalten Linie bis Punkt ${i}` : "Ende der Linie", cp, ref:cp}); }
+  plan = {pts, path, steps, order:[], drawn:true};
+  autoInfo = "<b>Übung: dein gemalter Weg.</b> Das Kind fährt die Linie vom Startkreis bis zum Ende nach.";
+  renderPlan(); return true;
+}
+/* Catmull-Rom durch alle Wegpunkte */
+function spline(p){
+  const out = [];
+  for(let i=0;i<p.length-1;i++){
+    const p0 = p[Math.max(0,i-1)], p1 = p[i], p2 = p[i+1], p3 = p[Math.min(p.length-1,i+2)];
+    for(let t=0;t<1;t+=1/16){
+      const t2 = t*t, t3 = t2*t;
+      out.push({
+        x:.5*((2*p1.x)+(-p0.x+p2.x)*t+(2*p0.x-5*p1.x+4*p2.x-p3.x)*t2+(-p0.x+3*p1.x-3*p2.x+p3.x)*t3),
+        y:.5*((2*p1.y)+(-p0.y+p2.y)*t+(2*p0.y-5*p1.y+4*p2.y-p3.y)*t2+(-p0.y+3*p1.y-3*p2.y+p3.y)*t3)});
+    }
+  }
+  out.push(p[p.length-1]);
+  let acc = 0; out[0].s = 0;
+  for(let i=1;i<out.length;i++){ acc += dist(out[i],out[i-1]); out[i].s = acc; }
+  out.total = acc; return out;
+}
+function pathAt(path, s){
+  let lo = 0, hi = path.length-1;
+  while(hi-lo > 1){ const m = (lo+hi)>>1; if(path[m].s < s) lo = m; else hi = m; }
+  const a = path[lo], b = path[hi], t = b.s > a.s ? (s-a.s)/(b.s-a.s) : 0;
+  return {x:a.x+(b.x-a.x)*t, y:a.y+(b.y-a.y)*t};
+}
+function renderPlan(){
+  const ol = $("plan"); ol.innerHTML = "";
+  $("autoTxt").hidden = !plan || !autoInfo; $("autoTxt").innerHTML = plan ? autoInfo : "";
+  if(!plan) return;
+  plan.steps.forEach((s,i) => {
+    const li = document.createElement("li"); li.textContent = s.text;
+    if(phase === "run" || phase === "done"){ if(i < cpIdx) li.className = "ok"; else if(i === cpIdx && phase === "run") li.className = "now"; }
+    ol.appendChild(li);
+  });
+}
+
+/* ---------- Haltung ----------
+   Aus den 3D-Weltpunkten der Erkennung (Meter, Hüfte als Ursprung, y nach unten).
+   Grenzwerte sind Arbeitswerte fuer Kinder: g = gruen, y = gelb, alles andere rot. */
+const METRICS = [
+  {id:"knee",  label:"Knie",       unit:"°", g:[35,95], y:[22,110], hint:{lo:"Knie beugen, tiefer gehen", hi:"Nicht so tief, etwas aufrichten"}},
+  {id:"torso", label:"Oberkörper", unit:"°", g:[18,50], y:[10,62],  hint:{lo:"Oberkörper leicht nach vorn", hi:"Oberkörper etwas aufrichten"}},
+  {id:"head",  label:"Kopf",       unit:"°", g:[-30,22], y:[-40,35], hint:{lo:"Kopf gerade halten", hi:"Kopf hoch, Blick nach vorn"}},
+  {id:"hands", label:"Hände",      unit:"×", g:[.75,3], y:[.5,3.5], hint:{lo:"Hände weiter auseinander am Schläger", hi:"Hände etwas näher zusammen"}},
+  {id:"stance",label:"Stand",      unit:"×", g:[.7,2.6], y:[.5,3.2], hint:{lo:"Füße breiter, schulterbreit stehen", hi:"Füße etwas enger"}}
+];
+const COACH = {
+  knee:  {t:"Knie",       look:"Knie gebeugt, Po leicht nach hinten, wie auf einem hohen Hocker.", say:"„Mach dich klein wie ein Torwart.“", drill:"Grundposition 10 Sekunden halten und dabei den Ball ruhig vor und zurück führen."},
+  torso: {t:"Oberkörper", look:"Brust leicht nach vorn über den Knien, Rücken bleibt gerade.", say:"„Nase über die Knie.“", drill:"Langsam durch den Slalom, der Oberkörper bleibt die ganze Zeit gleich tief."},
+  head:  {t:"Kopf",       look:"Blick nach vorn zum nächsten Hindernis, den Ball nur aus dem Augenwinkel sehen.", say:"„Schau, wo du hinwillst.“", drill:"Du hältst Finger hoch, das Kind ruft die Zahl, während es den Ball führt."},
+  hands: {t:"Hände",      look:"Obere Hand am Schlägerende, untere Hand etwa eine Unterarmlänge tiefer.", say:"„Untere Hand runter.“", drill:"Mit Klebeband die Stelle für die untere Hand am Schläger markieren."},
+  stance:{t:"Stand",      look:"Füße mindestens schulterbreit, Gewicht auf den Fußballen.", say:"„Breit stehen wie ein Sumo.“", drill:"Zwei Pucks schulterbreit hinlegen, die Füße bleiben außen."},
+  width: {t:"Breite",     look:"Ball weit nach außen führen, Arme lang machen, der Schläger geht weg vom Körper.", say:"„Mach den Schläger lang.“", drill:"Zwei Pucks als Außenmarken hinlegen, der Ball muss sie jedes Mal erreichen."},
+  feet:  {t:"Füße",       look:"Die Füße bleiben stehen, nur Hüfte, Oberkörper und Arme arbeiten.", say:"„Füße festkleben.“", drill:"Die Füße auf zwei Markierungen stellen und 20 Sekunden dribbeln, ohne sie zu verlassen."},
+  line:  {t:"Linie",      look:"Der Ball läuft auf der blauen Linie, eng um die Pucks herum.", say:"„Eng um den Puck.“", drill:"Erst langsam und nur auf die Linie achten, das Tempo kommt später."}
+};
+function rate(m, v){
+  if(!isFinite(v)) return "n";
+  if(v >= m.g[0] && v <= m.g[1]) return "g";
+  if(v >= m.y[0] && v <= m.y[1]) return "y";
+  return "r";
+}
+function measure(w){
+  const ok = i => w[i] && w[i].visibility > VIS;
+  const out = {};
+  const kn = [[23,25,27],[24,26,28]].filter(t => t.every(ok)).map(t => 180 - ang3(w[t[0]], w[t[1]], w[t[2]]));
+  out.knee = kn.length ? kn.reduce((a,b)=>a+b,0)/kn.length : NaN;
+  if([11,12,23,24].every(ok)){
+    const sh = mid3(w[11],w[12]), hp = mid3(w[23],w[24]), t = sub3(sh,hp);
+    out.torso = Math.acos(Math.max(-1,Math.min(1, -t[1]/len3(t))))*D;
+  }else out.torso = NaN;
+  if(ok(0) && ok(7) && ok(8)){
+    const e = mid3(w[7],w[8]), v = sub3(w[0], e);
+    out.head = Math.atan2(v[1], Math.hypot(v[0],v[2]))*D - headZero;
+  }else out.head = NaN;
+  const shw = ok(11) && ok(12) ? len3(sub3(w[11],w[12])) : NaN;
+  const okh = i => w[i] && w[i].visibility > VIS_HAND;
+  out.hands = okh(15) && okh(16) ? len3(sub3(w[15],w[16]))/shw : NaN;
+  out.stance = ok(27) && ok(28) ? Math.hypot(w[27].x-w[28].x, w[27].z-w[28].z)/shw : NaN;
+  out.rawHead = ok(0) && ok(7) && ok(8) ? out.head + headZero : NaN;
+  return out;
+}
+
+/* ---------- Erkennung ---------- */
+async function initModel(){
+  try{
+    const mod = await import(VISION);
+    const fs = await mod.FilesetResolver.forVisionTasks(WASM);
+    for(const delegate of ["GPU","CPU"]){
+      try{
+        landmarker = await mod.PoseLandmarker.createFromOptions(fs, {
+          baseOptions:{modelAssetPath:MODEL, delegate}, runningMode:"VIDEO", numPoses:1,
+          minPoseDetectionConfidence:.4, minPosePresenceConfidence:.4, minTrackingConfidence:.4});
+        break;
+      }catch(e){ landmarker = null; }
+    }
+    if(!landmarker) throw new Error("kein Modell");
+    $("modelPill").textContent = "Erkennung bereit"; $("modelPillBox").className = "status-pill ok";
+  }catch(e){
+    $("modelPill").textContent = "Erkennung fehlt"; $("modelPillBox").className = "status-pill bad";
+    setStatus("Die Körpererkennung konnte nicht geladen werden (Internet nötig). Scan und Ablauf gehen trotzdem.");
+  }
+  ui();
+}
+let lastVT = -1;
+function detect(){
+  if(!landmarker || video.readyState < 2) return;
+  if(fileMode && video.currentTime === lastVT) return;
+  lastVT = video.currentTime;
+  const t = performance.now();
+  let r; try{ r = landmarker.detectForVideo(video, t); }catch(e){ return; }
+  if(!r.landmarks || !r.landmarks.length){ if(t - poseT > 600) pose = null; return; }
+  const img = r.landmarks[0].map(p => ({x:p.x*W, y:p.y*H, vis:p.visibility ?? 1}));
+  // leichte Glaettung gegen Zittern
+  if(pose && t - poseT < 300) img.forEach((p,i) => { const o = pose.img[i]; p.x = o.x*.4 + p.x*.6; p.y = o.y*.4 + p.y*.6; });
+  pose = {img, world:r.worldLandmarks[0]}; poseT = t;
+}
+function feet(){
+  if(!pose) return null;
+  const a = pose.img[27], b = pose.img[28];
+  if(a.vis < .3 && b.vis < .3) return null;
+  const pa = a.vis >= b.vis ? a : b, pb = a.vis >= b.vis ? b : a;
+  return pb.vis > .3 ? {x:(a.x+b.x)/2, y:(a.y+b.y)/2} : {x:pa.x, y:pa.y};
+}
+function legLen(){
+  if(!pose) return W*.12;
+  const p = pose.img, l = [[23,25,27],[24,26,28]].map(t => dist(p[t[0]],p[t[1]]) + dist(p[t[1]],p[t[2]]));
+  return Math.max(W*.05, Math.max(...l));
+}
+
+/* ---------- Ball ----------
+   Ein farbiger Ball wird ueber seine Farbe verfolgt. Ein grauer oder schwarzer Ball als runder
+   dunkler Fleck in Ballgroesse auf dem hellen Boden, in der Naehe der letzten Position. */
+function hsv(r,g,b){
+  const mx = Math.max(r,g,b), mn = Math.min(r,g,b), d = mx-mn;
+  let h = 0;
+  if(d > 0){ if(mx === r) h = 60*(((g-b)/d) % 6); else if(mx === g) h = 60*((b-r)/d + 2); else h = 60*((r-g)/d + 4); }
+  if(h < 0) h += 360;
+  return {h, s: mx ? d/mx : 0, v: mx/255};
+}
+const bc = document.createElement("canvas"), bctx = bc.getContext("2d", {willReadFrequently:true});
+function learnBall(x, y){
+  const sw = 320, sh = Math.round(H*sw/W), k = W/sw;
+  bc.width = sw; bc.height = sh; bctx.drawImage(frameSrc(), 0, 0, sw, sh);
+  const cx = Math.round(x/k), cy = Math.round(y/k), d = bctx.getImageData(Math.max(0,cx-3), Math.max(0,cy-3), 7, 7).data;
+  // der kraeftigste Farbton um die Stelle herum
+  let best = null;
+  for(let i=0;i<d.length;i+=4){ const q = hsv(d[i],d[i+1],d[i+2]); if(!best || q.s*q.v > best.s*best.v) best = q; }
+  ballPos = {x, y}; ballT = performance.now();
+  if(best && best.s >= .35){ ballCol = best; return true; }
+  // kaum Farbe (grauer oder schwarzer Ball): als dunklen, runden Fleck auf hellem Boden merken
+  const L = lumWin(Math.max(0,cx-20), Math.max(0,cy-20), Math.min(sw,cx+21) - Math.max(0,cx-20), Math.min(sh,cy+21) - Math.max(0,cy-20));
+  const ref = quant(L.g, .75), blobs = darkBlobs(L, ref*.78, 2, 600);
+  const hit = blobs.filter(o => dist(o, {x:cx, y:cy}) < 6).sort((p,q) => dist(p,{x:cx,y:cy}) - dist(q,{x:cx,y:cy}))[0];
+  if(!hit) return false;
+  // Haengt der Ball am Schlaeger, ist der Fleck zu gross: dann nur die dunklen Punkte direkt um den Tipp zaehlen
+  let A = hit.n;
+  if(A > 160 || hit.asp > 2){
+    let n = 0, sx = 0, sy = 0;
+    for(let j=-7;j<=7;j++) for(let i=-7;i<=7;i++){ if(i*i+j*j > 49) continue; const x = cx+i-L.x, y = cy+j-L.y; if(x<0||y<0||x>=L.w||y>=L.h) continue; if(L.g[y*L.w+x] < ref*.78){ n++; sx += x; sy += y; } }
+    if(n < 4) return false;
+    A = n; ballPos = {x:(L.x + sx/n)*k, y:(L.y + sy/n)*k};
+  }else ballPos = {x:hit.x*k, y:hit.y*k};
+  ballCol = {mode:"dark", A, sw}; return true;
+}
+let tplScore = 0, bg = null;
+/* Hintergrund (Spielfeld beim Scan) in Arbeitsgroesse: was sich davon unterscheidet, ist neu im Bild */
+function saveBg(){
+  const sw = 320, sh = Math.round(H*sw/W);
+  bc.width = sw; bc.height = sh; bctx.drawImage(frameSrc(), 0, 0, sw, sh);
+  bg = {sw, sh, ...lumWin(0, 0, sw, sh)};
+  bg.floor = quant(bg.g.subarray(Math.floor(sh*.65)*sw), .6);
+}
+function lumWin(x, y, w, h){
+  const d = bctx.getImageData(x, y, w, h).data, g = new Float32Array(w*h);
+  for(let i=0;i<g.length;i++) g[i] = .299*d[i*4] + .587*d[i*4+1] + .114*d[i*4+2];
+  return {g, x, y, w, h};
+}
+function quant(g, q){ const a = Array.from(g).sort((p,r) => p-r); return a[Math.floor((a.length-1)*q)] || 0; }
+/* Dunkle Flecken im Fenster: Flaeche, Mittelpunkt (in Arbeitskoordinaten), Seitenverhaeltnis */
+function darkBlobs(L, thr, minA, maxA){
+  const {g, w, h} = L, seen = new Uint8Array(w*h), out = [], q = new Int32Array(w*h);
+  for(let s0=0; s0<g.length; s0++){
+    if(seen[s0] || g[s0] >= thr) continue;
+    let qh = 0, qt = 0, n = 0, sx = 0, sy = 0, x0 = w, x1 = 0, y0 = h, y1 = 0; q[qt++] = s0; seen[s0] = 1;
+    while(qh < qt){
+      const i = q[qh++], x = i % w, y = (i/w)|0; n++; sx += x; sy += y;
+      if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y;
+      const nb = [x>0?i-1:-1, x<w-1?i+1:-1, y>0?i-w:-1, y<h-1?i+w:-1];
+      for(const j of nb) if(j >= 0 && !seen[j] && g[j] < thr){ seen[j] = 1; q[qt++] = j; }
+    }
+    if(n < minA || n > maxA) continue;
+    const bw = x1-x0+1, bh = y1-y0+1;
+    out.push({x:L.x + sx/n, y:L.y + sy/n, n, asp:Math.max(bw,bh)/Math.min(bw,bh), fill:n/(bw*bh)});
+  }
+  return out;
+}
+/* Grauer Ball: runder dunkler Fleck in Ballgroesse, nicht auf einem liegenden Hindernis, nah an der letzten Position */
+function trackDark(now){
+  const sw = ballCol.sw, sh = Math.round(H*sw/W), k = W/sw;
+  if(bc.width !== sw || bc.height !== sh){ bc.width = sw; bc.height = sh; }
+  bctx.drawImage(video, 0, 0, sw, sh);
+  // laenger verloren: im ganzen Bild suchen
+  const lost = !ballPos || now - ballT > 900, R = Math.round(sw*(lost ? 2 : .1));
+  const c = ballPos ? {x:ballPos.x/k, y:ballPos.y/k} : {x:sw/2, y:sh*.7};
+  const x0 = Math.max(0, Math.round(c.x - R)), y0 = Math.max(0, Math.round(c.y - R));
+  const x1 = Math.min(sw, Math.round(c.x + R)), y1 = Math.min(sh, Math.round(c.y + R));
+  if(x1-x0 < 4 || y1-y0 < 4) return;
+  const L = lumWin(x0, y0, x1-x0, y1-y0), ref = quant(L.g, .75);
+  // Unbewegtes (Hindernisse, Boden) ueber den Hintergrund ausblenden
+  if(bg && bg.sw === sw) for(let j=0;j<L.h;j++) for(let i=0;i<L.w;i++){ const o = j*L.w+i, b = bg.g[(L.y+j)*sw + L.x+i]; if(Math.abs(L.g[o]-b) < 22) L.g[o] = 255; }
+  // Schuhe sind auch dunkel und rund: alles direkt an den Fuessen auslassen
+  const foot = pose ? [27,28,29,30,31,32].map(i => pose.img[i]).filter(p => p.vis > .3) : [], fr = legLen()*.22;
+  const ok = o => {
+    if(o.asp > 2.3 || o.fill < .4) return false;
+    const p = {x:o.x*k, y:o.y*k};
+    if(foot.some(q => dist(q, p) < fr)) return false;
+    // nur auf dem Boden: dort war der Hintergrund hell
+    if(bg && bg.sw === sw){ const bi = Math.round(o.y)*sw + Math.round(o.x); if(!(bg.g[bi] > bg.floor*.72)) return false; }
+    return !obstacles.some(ob => ob.type === "puck" ? dist(ob, p) < ob.r + 4 :
+      (() => { const vx = ob.x2-ob.x1, vy = ob.y2-ob.y1, t = Math.max(0,Math.min(1,((p.x-ob.x1)*vx+(p.y-ob.y1)*vy)/(vx*vx+vy*vy||1))); return Math.hypot(ob.x1+vx*t-p.x, ob.y1+vy*t-p.y) < 8; })());
+  };
+  let cand = darkBlobs(L, ref*.78, Math.max(2, ballCol.A*.3), ballCol.A*3).filter(ok);
+  if(!cand.length){
+    // Ball klebt am Schlaeger: einmal ausduennen, der duenne Schaft verschwindet, der runde Ball bleibt
+    const E = {...L, g:new Float32Array(L.g)}, thr = ref*.78;
+    for(let j=1;j<L.h-1;j++) for(let i=1;i<L.w-1;i++){ const o = j*L.w+i; if(L.g[o] < thr && (L.g[o-1] >= thr || L.g[o+1] >= thr || L.g[o-L.w] >= thr || L.g[o+L.w] >= thr)) E.g[o] = 255; }
+    cand = darkBlobs(E, thr, Math.max(1, ballCol.A*.1), ballCol.A*1.5).filter(ok);
+  }
+  if(!cand.length) return;
+  cand.sort((p,q) => (dist(p,c) + Math.abs(p.n-ballCol.A)) - (dist(q,c) + Math.abs(q.n-ballCol.A)));
+  const bp = {x:cand[0].x*k, y:cand[0].y*k}; tplScore = cand.length;
+  ballPos = ballPos && now - ballT < 120 ? {x:ballPos.x*.3 + bp.x*.7, y:ballPos.y*.3 + bp.y*.7} : bp; ballT = now;
+}
+/* Ball nicht gefunden: einen kleinen, kraeftig farbigen Fleck suchen, der sich gegenueber dem Scan bewegt hat
+   und unterhalb der Hueften liegt. Dessen Farbe wird gemerkt. */
+let autoBallAt = 0;
+function autoFindBall(now){
+  if(!bg || now - autoBallAt < 400 || frozen) return; autoBallAt = now;
+  const sw = 160, sh = Math.round(H*sw/W), k = W/sw;
+  bc.width = sw; bc.height = sh; bctx.drawImage(video, 0, 0, sw, sh);
+  const d = bctx.getImageData(0, 0, sw, sh).data, bgs = bg.sw/sw;
+  const hipY = pose && pose.img[23].vis > .3 ? Math.max(pose.img[23].y, pose.img[24].y)/k : sh*.35;
+  const M = new Uint8Array(sw*sh), Q = [];
+  for(let y=Math.floor(hipY); y<sh; y++) for(let x=0; x<sw; x++){
+    const i = (y*sw+x)*4, q = hsv(d[i],d[i+1],d[i+2]); if(q.s < .62 || q.v < .4) continue;
+    const bl = bg.g[Math.min(bg.h-1, Math.round(y*bgs))*bg.sw + Math.min(bg.sw-1, Math.round(x*bgs))], l = .299*d[i]+.587*d[i+1]+.114*d[i+2];
+    if(Math.abs(l - bl) < 18) continue;
+    M[y*sw+x] = 1; Q[y*sw+x] = q;
+  }
+  let best = null; const seen = new Uint8Array(sw*sh), st = [];
+  for(let s0=0; s0<M.length; s0++){
+    if(!M[s0] || seen[s0]) continue;
+    const pix = []; st.length = 0; st.push(s0); seen[s0] = 1;
+    while(st.length){ const i = st.pop(); pix.push(i); const x = i % sw;
+      for(const j of [x>0?i-1:-1, x<sw-1?i+1:-1, i-sw, i+sw]) if(j >= 0 && j < M.length && M[j] && !seen[j]){ seen[j] = 1; st.push(j); } }
+    if(pix.length < 2 || pix.length > 80) continue;
+    const xs = pix.map(i => i % sw), ys = pix.map(i => (i/sw)|0), bw = Math.max(...xs)-Math.min(...xs)+1, bh = Math.max(...ys)-Math.min(...ys)+1;
+    if(Math.max(bw,bh) > 2.5*Math.min(bw,bh) + 1) continue;
+    const sat = pix.reduce((a,i) => a + Q[i].s, 0)/pix.length;
+    if(!best || sat*pix.length > best.sc) best = {sc:sat*pix.length, x:xs.reduce((a,b)=>a+b,0)/pix.length, y:ys.reduce((a,b)=>a+b,0)/pix.length, q:Q[pix[0]]};
+  }
+  if(best){ ballCol = best.q; ballPos = {x:best.x*k, y:best.y*k}; ballT = now; }
+}
+function trackBall(now){
+  if(!ballCol && W && ["count","run","calib","approach"].includes(phase)) autoFindBall(now);
+  if(!ballCol || !W) return;
+  if(ballCol.mode === "dark"){ trackDark(now); return; }
+  const sw = 240, sh = Math.round(H*sw/W), k = W/sw;
+  if(bc.width !== sw || bc.height !== sh){ bc.width = sw; bc.height = sh; }
+  bctx.drawImage(video, 0, 0, sw, sh);
+  let x0 = 0, y0 = 0, x1 = sw, y1 = sh;
+  if(ballPos && now - ballT < 600){ const r = sw*.14; x0 = Math.max(0, Math.floor(ballPos.x/k - r)); x1 = Math.min(sw, Math.ceil(ballPos.x/k + r)); y0 = Math.max(0, Math.floor(ballPos.y/k - r)); y1 = Math.min(sh, Math.ceil(ballPos.y/k + r)); }
+  // Der Ball liegt am Boden: nie oberhalb der Hueften suchen (Gesicht, rote Trikots, Poster)
+  if(pose && pose.img[23].vis > .3 && pose.img[24].vis > .3) y0 = Math.max(y0, Math.floor(Math.min(pose.img[23].y, pose.img[24].y)/k));
+  if(x1 - x0 < 2 || y1 - y0 < 2) return;
+  const d = bctx.getImageData(x0, y0, x1-x0, y1-y0).data, w = x1-x0, sMin = Math.max(.3, ballCol.s*.55), vMin = ballCol.v*.45;
+  // Hintergrund in derselben Arbeitsgroesse: gleichfarbige Hindernisse (rote Huerde) stehen still und fallen heraus
+  const bgs = bg ? bg.sw/sw : 0;
+  let sx = 0, sy = 0, n = 0;
+  for(let i=0, p=0; i<d.length; i+=4, p++){
+    const q = hsv(d[i],d[i+1],d[i+2]); if(q.s < sMin || q.v < vMin) continue;
+    let dh = Math.abs(q.h - ballCol.h); if(dh > 180) dh = 360 - dh;
+    if(dh > 20) continue;
+    const px = x0 + p % w, py = y0 + ((p / w)|0);
+    if(bg){ const bl = bg.g[Math.min(bg.h-1, Math.round(py*bgs))*bg.sw + Math.min(bg.sw-1, Math.round(px*bgs))], l = .299*d[i]+.587*d[i+1]+.114*d[i+2]; if(Math.abs(l - bl) < 18) continue; }
+    sx += px - x0; sy += py - y0; n++;
+  }
+  if(n < 3 || n > sw*sh*.02) return;
+  const bp = {x:(x0 + sx/n)*k, y:(y0 + sy/n)*k};
+  ballPos = ballPos && now - ballT < 120 ? {x:ballPos.x*.35 + bp.x*.65, y:ballPos.y*.35 + bp.y*.65} : bp; ballT = now;
+}
+const ballLive = now => ballPos && now - ballT < 350;
+function puckR(){ const ps = obstacles.filter(o => o.type === "puck"); return ps.length ? ps.reduce((a,o) => a+o.r, 0)/ps.length : W*.016; }
+/* Meter pro Bildpunkt aus der Puckgroesse (Durchmesser 7,6 cm). Grobe Schaetzung, Perspektive gemittelt. */
+function mPerPx(){ const ps = obstacles.filter(o => o.type === "puck" && !o.manual); return ps.length ? 0.076/(2*puckR()) : null; }
+/* Wo auf der Linie ist der Ball (oder das Kind)? Nur vorwaerts in einem Fenster suchen, damit
+   Kreuzungen der Linie nicht verwirren. */
+function onPath(p){
+  const pa = plan.path; let best = -1, bd = Infinity;
+  for(let i=Math.max(0, progIdx-8); i<Math.min(pa.length, progIdx+90); i++){ const d = dist(pa[i], p); if(d < bd){ bd = d; best = i; } }
+  return {i:best, d:bd};
+}
+
+/* ---------- Schlaeger ----------
+   Von der unteren Hand aus wird in Richtung des Schlaegers (obere Hand -> untere Hand) nach dem dunklen Schaft
+   gesucht. Wo der dunkle Strich auf dem hellen Boden endet, sitzt die Kelle. */
+const sc2 = document.createElement("canvas"), s2 = sc2.getContext("2d", {willReadFrequently:true});
+let stick = null, stickTrail = [], bladeMax = 0;
+function trackStick(now){
+  if(!pose){ stick = null; return; }
+  const p = pose.img, a = p[15], b = p[16];
+  if(a.vis < .25 || b.vis < .25){ stick = null; return; }
+  const sw = 320, sh = Math.round(H*sw/W), k = W/sw;
+  if(sc2.width !== sw || sc2.height !== sh){ sc2.width = sw; sc2.height = sh; }
+  s2.drawImage(video, 0, 0, sw, sh);
+  const img = s2.getImageData(0, 0, sw, sh).data;
+  const lum = (x,y) => { const o = (y*sw+x)*4; return .299*img[o] + .587*img[o+1] + .114*img[o+2]; };
+  // Bodenhelligkeit: aus dem Scan, sonst grob aus dem unteren Bilddrittel
+  let ref = bg ? bg.floor : 0;
+  if(!ref){ const v = []; for(let i=0;i<300;i++) v.push(lum(Math.floor(Math.random()*sw), Math.floor(sh*.65 + Math.random()*sh*.34))); v.sort((x,y)=>x-y); ref = v[180]; }
+  const lo = a.y > b.y ? a : b, hi = lo === a ? b : a;
+  const base = Math.atan2(lo.y-hi.y, lo.x-hi.x), maxL = legLen()*2.4/k;
+  // Beine sind auch dunkel: Strahlen, die an einem Bein entlanglaufen, zaehlen dort nicht
+  const segs = [[23,25],[25,27],[24,26],[26,28]].filter(([i,j]) => p[i].vis > .3 && p[j].vis > .3).map(([i,j]) => [p[i].x/k, p[i].y/k, p[j].x/k, p[j].y/k]);
+  const legW = legLen()*.13/k;
+  const nearLeg = (x,y) => segs.some(([x1,y1,x2,y2]) => { const vx = x2-x1, vy = y2-y1, t = Math.max(0,Math.min(1,((x-x1)*vx+(y-y1)*vy)/(vx*vx+vy*vy||1))); return Math.hypot(x1+vx*t-x, y1+vy*t-y) < legW; });
+  let best = null;
+  // Der Schlaeger zeigt von der unteren Hand nach unten zum Boden
+  for(let th=0.15; th<=Math.PI-0.15; th+=.05){
+    const cx = Math.cos(th), cy = Math.sin(th);
+    let gap = 0, end = 0, n = 0, thin = 0, far = 0, edge = false;
+    for(let t=3; t<maxL; t++){
+      const x = Math.round(lo.x/k + cx*t), y = Math.round(lo.y/k + cy*t);
+      if(x < 1 || y < 1 || x >= sw-1 || y >= sh-1){ edge = gap === 0; break; }
+      // Schaft ist nur 1-2 Pixel breit: quer +-1 Pixel mitpruefen
+      const dk = Math.min(lum(x,y), lum(Math.round(x - cy), Math.round(y + cx)), lum(Math.round(x + cy), Math.round(y - cx)));
+      if(dk < ref*.6 && !nearLeg(x,y)){
+        gap = 0; end = t; n++;
+        // Ein Schlaeger ist schmal: quer dazu liegt heller Boden
+        const px = Math.round(x - cy*5), py = Math.round(y + cx*5), qx = Math.round(x + cy*5), qy = Math.round(y - cx*5);
+        if(t > 12) far++; else continue;
+        if((px>=0 && py>=0 && px<sw && py<sh && lum(px,py) > ref*.7) || (qx>=0 && qy>=0 && qx<sw && qy<sh && lum(qx,qy) > ref*.7)) thin++;
+      } else if(++gap > 5) break;
+    }
+    // Strahlen, die bis an den Bildrand laufen, sind Waende oder Kanten, kein Schlaeger
+    if(edge || !n) continue;
+    const tipY = lo.y/k + cy*end, kneeY = Math.max(p[25].y, p[26].y)/k;
+    if(tipY < kneeY) continue;
+    let dd = Math.abs(th - base); if(dd > Math.PI) dd = 2*Math.PI - dd;
+    const sc = end - dd*8;
+    if(n > end*.6 && far > 6 && thin > far*.5 && (!best || sc > best.sc)) best = {th, end, sc};
+  }
+  if(!best || best.end*k < legLen()*.45){ if(stick && now - stick.t > 300) stick = null; return; }
+  const tip = {x:lo.x + Math.cos(best.th)*best.end*k, y:lo.y + Math.sin(best.th)*best.end*k};
+  const sm = stick && now - stick.t < 200;
+  stick = {hi, lo, tip: sm ? {x:stick.tip.x*.4 + tip.x*.6, y:stick.tip.y*.4 + tip.y*.6} : tip, t:now};
+  const last = stickTrail[stickTrail.length-1];
+  if(last && phase === "run"){
+    const mpp = mPerPx(), dt = (now - last.t)/1000;
+    if(mpp && dt > .02 && dt < .25){ const v = dist(last, stick.tip)*mpp/dt; if(v < 15) bladeMax = Math.max(bladeMax, v); }
+  }
+  stickTrail.push({x:stick.tip.x, y:stick.tip.y, t:now});
+  while(stickTrail.length && now - stickTrail[0].t > 1200) stickTrail.shift();
+}
+const stickLive = now => stick && now - stick.t < 300;
+
+/* ---------- Hinweise und Sprache ---------- */
+function say(t){
+  hint = {text:t, at:performance.now()};
+  if(!voiceOn || !("speechSynthesis" in window)) return;
+  try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = "de-DE"; u.rate = 1.05; speechSynthesis.speak(u); }catch(e){}
+}
+function coach(m, now){
+  if(phase !== "run") return;
+  for(const def of METRICS){
+    const v = m[def.id], c = rate(def, v);
+    if(c === "r"){
+      redSince[def.id] = redSince[def.id] || now;
+      if(now - redSince[def.id] > 900 && now - lastHintAt > 2800 && now - (hintCool[def.id]||0) > 7000){
+        say(v < def.g[0] ? def.hint.lo : def.hint.hi); lastHintAt = now; hintCool[def.id] = now;
+      }
+    }else redSince[def.id] = 0;
+  }
+}
+
+/* ---------- Ablaufsteuerung ---------- */
+function startTraining(){
+  if(!plan && !station()) return;
+  if(frozen) setFrozen(false);
+  phase = "approach"; phaseT = performance.now(); cpIdx = 0;
+  stats = {}; METRICS.forEach(m => stats[m.id] = {g:0,y:0,r:0,n:0});
+  redSince = {}; hintCool = {}; trail = []; progIdx = 0; moments = {}; momentAt = {};
+  closeReplay();
+  if(fileMode && video.paused) video.play();
+  phase = "preview"; preview = {t0:performance.now(), loops:2};
+  say("Schau genau hin. So geht die Übung.");
+  ui(); renderPlan();
+}
+function endPreview(){
+  preview = null;
+  if(phase !== "preview") return;
+  phase = "approach"; phaseT = performance.now();
+  say(station() ? "Jetzt an deinen Platz stellen" : "Jetzt in den Startkreis stellen");
+  ui();
+}
+function stopTraining(save){
+  if(phase === "run" && save) station() ? finishStation() : finish(false);
+  else { recStop(); preview = null; phase = "idle"; ui(); renderPlan(); }
+}
+/* Mitschnitt der Runde mit allen Linien und Hinweisen, fuer die Wiederholung auf TV oder Tablet */
+function recStart(){
+  if(clipURL){ URL.revokeObjectURL(clipURL); clipURL = null; }
+  rec = null;
+  if(!cv.captureStream || !window.MediaRecorder) return;
+  try{
+    const mt = ["video/webm;codecs=vp9","video/webm","video/mp4"].find(t => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t));
+    rec = new MediaRecorder(cv.captureStream(30), mt ? {mimeType:mt} : {}); recChunks = [];
+    rec.ondataavailable = e => { if(e.data && e.data.size) recChunks.push(e.data); };
+    rec.onstop = () => { if(recChunks.length){ clipURL = URL.createObjectURL(new Blob(recChunks, {type:rec.mimeType || "video/webm"})); } showReplayBtns(); };
+    rec.start(500);
+  }catch(e){ rec = null; }
+}
+function recStop(){ try{ if(rec && rec.state !== "inactive") rec.stop(); }catch(e){} }
+function openReplay(t, slow){
+  if(!clipURL) return;
+  const r = $("replay"); r.hidden = false; $("replayBar").hidden = false; r.src = clipURL; r.onerror = null; r.onended = null;
+  try{ $("stage").scrollIntoView({behavior:"smooth", block:"start"}); }catch(e){}
+  const go = () => { try{ r.currentTime = Math.max(0, t || 0); }catch(e){} r.playbackRate = slow ? .5 : 1; $("rpSlow").setAttribute("aria-pressed", String(!!slow)); r.play().catch(()=>{}); };
+  if(r.readyState >= 1) go(); else r.onloadedmetadata = go;
+}
+function closeReplay(){ const r = $("replay"); if(!r.hidden){ r.pause(); r.hidden = true; $("replayBar").hidden = true; if(!W) $("empty").hidden = false; } $("stage").classList.remove("demo"); $("rpClose").textContent = "Zurück zur Kamera"; }
+function showReplayBtns(){ document.querySelectorAll("[data-replay]").forEach(b => b.disabled = !clipURL); }
+function finish(complete){
+  runEnd = performance.now(); phase = "done"; recStop();
+  const secs = (runEnd - runT0)/1000;
+  const sc = {}; METRICS.forEach(m => { const s = stats[m.id]; sc[m.id] = s.n ? Math.round(100*s.g/s.n) : null; });
+  // Linie: Anteil der Ballpositionen nah an der vorgegebenen Linie
+  const tol = Math.max(W*.035, puckR()*1.8), bt = trail.filter(p => p.d !== undefined);
+  sc.line = bt.length >= 8 ? Math.round(100*bt.filter(p => p.d < tol).length/bt.length) : null;
+  const measuring = !pace;
+  if(complete && measuring) pace = plan.path.total/secs;
+  const mpp = mPerPx(), speed = mpp && complete ? plan.path.total*mpp/secs : null;
+  const entry = {name:$("player").value.trim() || "–", date:new Date().toISOString(), secs:+secs.toFixed(1), cps:cpIdx, total:plan.steps.length, kind, level, sc,
+    round: measuring ? "Messrunde" : "Tempo " + Math.round(paceF*100) + " %", speed: speed ? +speed.toFixed(2) : null, blade: bladeMax ? +bladeMax.toFixed(1) : null};
+  try{ const h = JSON.parse(localStorage.getItem("ivp-history") || "[]"); h.unshift(entry); localStorage.setItem("ivp-history", JSON.stringify(h.slice(0,200))); }catch(e){}
+  showResult(entry, complete);
+  say(complete ? (measuring ? `Tempo gemessen: ${secs.toFixed(1).replace(".",",")} Sekunden` : `Geschafft in ${secs.toFixed(1).replace(".",",")} Sekunden`) : "Durchgang beendet");
+  ui(); renderPlan();
+}
+function showResult(e, complete){
+  const cls = p => p === null || p === undefined ? "" : p >= 70 ? "g" : p >= 45 ? "y" : "r";
+  const fmt = n => String(n).replace(".",",");
+  const ids = ["line", "width", "feet", ...METRICS.map(m => m.id)].filter(id => e.sc[id] !== null && e.sc[id] !== undefined);
+  const weak = ids.filter(id => e.sc[id] < 70).sort((a,b) => e.sc[a]-e.sc[b]).slice(0,2);
+  const mom = Object.entries(moments).sort((a,b) => b[1].sev - a[1].sev).slice(0,4);
+  $("result").innerHTML = `
+    <p style="margin:0 0 8px"><b>${e.round}</b>${e.round === "Messrunde" && complete ? " · ab jetzt läuft der Tempo-Puck mit" : ""}</p>
+    ${e.station ? `<div class="res">
+      <div class="card g"><div class="k">Wiederholungen</div><div class="big">${e.reps}</div></div>
+      <div class="card"><div class="k">Pro Minute</div><div class="big">${e.perMin}</div></div>
+      <div class="card ${cls(e.sc.width)}"><div class="k">Breite (× Schulter)</div><div class="big">${e.width ? fmt(e.width.toFixed(1)) : "–"}</div></div>
+      <div class="card ${cls(e.sc.feet)}"><div class="k">Füße ruhig</div><div class="big">${e.sc.feet === null || e.sc.feet === undefined ? "–" : e.sc.feet + " %"}</div></div>
+    </div>` : `<div class="res">
+      <div class="card ${complete ? "g" : "y"}"><div class="k">Zeit</div><div class="big">${fmt(e.secs.toFixed(1))} s</div></div>
+      <div class="card ${e.cps === e.total ? "g" : "y"}"><div class="k">Punkte geschafft</div><div class="big">${e.cps} / ${e.total}</div></div>
+      <div class="card ${cls(e.sc.line)}"><div class="k">Ball auf der Linie</div><div class="big">${e.sc.line === null ? "–" : e.sc.line + " %"}</div></div>
+      <div class="card"><div class="k">Tempo (Schätzung)</div><div class="big">${e.speed ? fmt(e.speed.toFixed(1)) + " m/s" : "–"}</div></div>
+    </div>`}
+    <div class="lbl">Haltung in der Runde (Anteil grün)</div>
+    <div class="cards">${METRICS.map(m => `<div class="card ${cls(e.sc[m.id])}"><div class="k">${m.label}</div><div class="v">${e.sc[m.id] === null ? "–" : e.sc[m.id] + " %"}</div></div>`).join("")}</div>
+    <div class="row" style="margin-top:10px"><button data-replay="1" ${clipURL ? "" : "disabled"}>Wiederholung</button><button data-replay="slow" ${clipURL ? "" : "disabled"}>Zeitlupe</button></div>
+    <div class="lbl">So hilfst du deinem Kind</div>
+    ${weak.length ? weak.map(id => `<div class="coach"><h3>${COACH[id].t} · ${e.sc[id]} % grün</h3><p><b>Darauf achten:</b> ${COACH[id].look}</p><p><b>Sag:</b> ${COACH[id].say}</p><p><b>Übung:</b> ${COACH[id].drill}</p></div>`).join("") : `<div class="coach"><p>Alles überwiegend im grünen Bereich. Loben und beim nächsten Mal das Tempo erhöhen.</p></div>`}
+    ${mom.length ? `<div class="lbl">Momente zum Besprechen</div><div class="moments">${mom.map(([id,m]) => `<button data-moment="${m.t.toFixed(2)}"><img src="${m.img}" alt="${COACH[id].t} bei ${fmt(m.t.toFixed(1))} s"><span>${COACH[id].t} · ${fmt(m.t.toFixed(1))} s</span></button>`).join("")}</div><p style="margin-top:6px">Antippen zeigt die Stelle in der Wiederholung. Erst gemeinsam anschauen, dann einen Punkt verbessern.</p>` : ""}`;
+  $("result").querySelectorAll("[data-replay]").forEach(b => b.onclick = () => openReplay(0, b.dataset.replay === "slow"));
+  $("result").querySelectorAll("[data-moment]").forEach(b => b.onclick = () => openReplay(Math.max(0, +b.dataset.moment - 1), true));
+  showHistory();
+}
+function showHistory(){
+  let h = []; try{ h = JSON.parse(localStorage.getItem("ivp-history") || "[]"); }catch(e){}
+  const nm = $("player").value.trim();
+  if(nm) h = h.filter(e => e.name === nm);
+  if(!h.length){ $("hist").innerHTML = "<p>Noch keine Durchgänge gespeichert.</p>"; return; }
+  const avg = e => { const v = METRICS.map(m => e.sc[m.id]).filter(x => x !== null && x !== undefined); return v.length ? Math.round(v.reduce((a,b)=>a+b,0)/v.length) + " %" : "–"; };
+  $("hist").innerHTML = `<table class="hist"><tr><th>Datum</th><th>Spieler</th><th>Runde</th><th>Zeit</th><th>Linie / Wdh.</th><th>Haltung</th></tr>${
+    h.slice(0,8).map(e => `<tr><td>${new Date(e.date).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"})}</td><td>${e.name.replace(/[<>&]/g,"")}</td><td>${e.round || "–"}</td><td>${e.secs.toFixed(1).replace(".",",")} s</td><td>${e.station ? e.reps + " Wdh." : e.sc.line === null || e.sc.line === undefined ? "–" : e.sc.line + " %"}</td><td>${avg(e)}</td></tr>`).join("")}</table>`;
+}
+function tick(now){
+  const f = feet(), m = pose && pose.world ? measure(pose.world) : null;
+  const rs = Math.max(W*.06, legLen()*.55);
+  if(phase === "approach"){
+    const free = station() || kind === "eight";
+    if(f && (free || dist(f, start) < rs)){ if(free) start = {x:f.x, y:f.y}; if(now - phaseT > 1200){ phase = "calib"; phaseT = now; say("Gerade stehen und nach vorn schauen"); } }
+    else phaseT = now;
+  }else if(phase === "calib"){
+    if(!f || (!station() && kind !== "eight" && dist(f,start) > rs*1.4)){ phase = "approach"; phaseT = now; }
+    else if(now - phaseT > 1800){
+      if(m && isFinite(m.rawHead)) headZero = Math.max(-15, Math.min(15, m.rawHead));
+      phase = "count"; phaseT = now; say("Grundposition. Drei, zwei, eins");
+      if(kind === "eight" && plan && !plan.drawn && !station()){ buildPlan(); }
+    }
+  }else if(phase === "count"){
+    if(now - phaseT > 3200){ phase = "run"; runT0 = now; cpIdx = 0; progIdx = 0; trail = []; bladeMax = 0; sx = {side:0, reps:0, amps:[], cur:0, feet0:f, moved:0, n:0, sh:[]}; say("Los"); recStart(); renderPlan(); }
+  }else if(phase === "run"){
+    if(m){
+      coach(m, now);
+      METRICS.forEach(d => { const c = rate(d, m[d.id]); if(c !== "n"){ stats[d.id][c]++; stats[d.id].n++; } });
+      grabMoments(m, now);
+      parentView(m);
+    }
+    if(station()){ stationTick(now, f); if(m) updateCards(m); return; }
+    // Ball bevorzugt, sonst die Fuesse
+    const useBall = ballLive(now), useBlade = !useBall && stickLive(now), probe = useBall ? ballPos : useBlade ? stick.tip : f;
+    if(probe){
+      const op = onPath(probe), tol = useBall || useBlade ? Math.max(W*.05, puckR()*3) : legLen()*.8;
+      if(op.i >= 0 && op.d < tol*1.6) progIdx = Math.max(progIdx, op.i);
+      if(useBall && (!trail.length || now - trail[trail.length-1].t > 60)) trail.push({x:ballPos.x, y:ballPos.y, t:now, d:op.d});
+    }
+    const st = plan.steps[cpIdx];
+    const cpTol = useBall ? Math.max(W*.05, puckR()*3) : useBlade ? Math.max(W*.06, puckR()*4) : Math.max(W*.07, legLen()*.8);
+    const inZone = z => (probe.x - z.x)*z.side > z.r*.35 && Math.abs(probe.y - z.y) < z.r*2.5;
+    if(probe && st && (st.zone && useBall ? inZone(st.zone) : dist(probe, st.cp) < cpTol) && !(cpIdx === plan.steps.length-1 && now - runT0 < 1500)){
+      cpIdx++; renderPlan();
+      if(cpIdx >= plan.steps.length){ finish(true); }
+    }
+    if(now - runT0 > 180000) finish(false);
+  }
+  if(m) updateCards(m);
+}
+/* Stand-Uebung: Seitenwechsel des Balls zur Koerpermitte zaehlen, Breite in Schulterbreiten, Fuesse ruhig */
+function stationTick(now, f){
+  const p = pose && pose.img;
+  if(p && p[23].vis > .3 && p[24].vis > .3 && p[11].vis > .3 && p[12].vis > .3){
+    const cx = (p[23].x + p[24].x)/2, sh = Math.max(W*.03, dist(p[11], p[12]));
+    sx.sh.push(sh); if(sx.sh.length > 60) sx.sh.shift();
+    const probe = ballLive(now) ? ballPos : stickLive(now) ? stick.tip : null;
+    if(probe){
+      const dx = probe.x - cx, thr = sh*.3;
+      sx.cur = Math.max(sx.cur, Math.abs(dx));
+      const sd = dx > thr ? 1 : dx < -thr ? -1 : 0;
+      if(sd && sd !== sx.side){ if(sx.side){ sx.reps++; sx.amps.push(sx.cur/sh); } sx.side = sd; sx.cur = Math.abs(dx); }
+      if(ballLive(now) && (!trail.length || now - trail[trail.length-1].t > 60)) trail.push({x:ballPos.x, y:ballPos.y, t:now});
+    }
+  }
+  if(f){
+    if(!sx.feet0) sx.feet0 = f;
+    sx.n++; if(dist(f, sx.feet0) > legLen()*.4) sx.moved++;
+  }
+  if(now - runT0 > ex.secs*1000) finishStation();
+}
+function finishStation(){
+  runEnd = performance.now(); phase = "done"; recStop();
+  const secs = (runEnd - runT0)/1000;
+  const sc = {}; METRICS.forEach(m => { const s = stats[m.id]; sc[m.id] = s.n ? Math.round(100*s.g/s.n) : null; });
+  const a = sx.amps.slice().sort((x,y) => x-y), width = a.length ? 2*a[Math.floor(a.length/2)] : null;
+  sc.width = width ? Math.min(100, Math.round(100*width/ex.width)) : null;
+  sc.feet = ex.feetStill && sx.n > 10 ? Math.round(100*(1 - sx.moved/sx.n)) : null;
+  const entry = {name:$("player").value.trim() || "–", date:new Date().toISOString(), secs:+secs.toFixed(1), ex:ex.id, exTitle:ex.title, station:true,
+    reps:sx.reps, perMin:Math.round(sx.reps*60/secs), width: width ? +width.toFixed(2) : null, sc, round:ex.title, blade: bladeMax ? +bladeMax.toFixed(1) : null};
+  try{ const h = JSON.parse(localStorage.getItem("ivp-history") || "[]"); h.unshift(entry); localStorage.setItem("ivp-history", JSON.stringify(h.slice(0,200))); }catch(e){}
+  showResult(entry, true);
+  say(`${sx.reps} Wiederholungen. Gut gemacht`);
+  ui(); renderPlan();
+}
+/* Fuer jede Haltung den deutlichsten roten Moment als Standbild merken */
+function grabMoments(m, now){
+  for(const d of METRICS){
+    const v = m[d.id]; if(rate(d, v) !== "r") continue;
+    const sev = v < d.g[0] ? (d.g[0]-v)/(Math.abs(d.g[0]) || 1) : (v-d.g[1])/(Math.abs(d.g[1]) || 1);
+    if(moments[d.id] && sev <= moments[d.id].sev) continue;
+    if(now - (momentAt[d.id] || 0) < 700) continue;
+    momentAt[d.id] = now;
+    try{ moments[d.id] = {sev, t:(now - runT0)/1000, img:cv.toDataURL("image/jpeg", .55)}; }catch(e){}
+  }
+}
+/* Eltern-Blick: worauf gerade achten */
+let parentAt = 0;
+function parentView(m){
+  const now = performance.now(); if(now - parentAt < 1200) return; parentAt = now;
+  const bad = METRICS.map(d => ({d, c:rate(d, m[d.id])})).filter(x => x.c === "r" || x.c === "y").sort((a,b) => (a.c === "r" ? 0 : 1) - (b.c === "r" ? 0 : 1));
+  $("parent").hidden = false;
+  $("parentTxt").textContent = bad.length ? COACH[bad[0].d.id].look : "Haltung passt gerade. Loben!";
+}
+function updateCards(m){
+  const box = $("cards");
+  if(!box.children.length) box.innerHTML = METRICS.map(d => `<div class="card" id="mc-${d.id}"><div class="k">${d.label}</div><div class="v">–</div></div>`).join("");
+  METRICS.forEach(d => {
+    const el = $("mc-" + d.id), v = m[d.id], c = rate(d, v);
+    el.className = "card " + (c === "n" ? "" : c);
+    el.querySelector(".v").textContent = !isFinite(v) ? "–" : d.unit === "°" ? Math.round(v) + "°" : v.toFixed(2).replace(".",",") + "×";
+  });
+}
+
+/* ---------- Zeichnen ---------- */
+function circle(x,y,r,stroke,lw,fill){ ctx.beginPath(); ctx.arc(X(x),y,r,0,Math.PI*2); if(fill){ ctx.fillStyle = fill; ctx.fill(); } if(stroke){ ctx.strokeStyle = stroke; ctx.lineWidth = lw; ctx.stroke(); } }
+function label(t, x, y, size, color, bg){
+  ctx.font = `600 ${size}px "Barlow Condensed","Arial Narrow",sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  if(bg){ const w = ctx.measureText(t).width + size*.8; ctx.fillStyle = bg; ctx.beginPath(); ctx.roundRect(X(x)-w/2, y-size*.7, w, size*1.4, size*.35); ctx.fill(); }
+  ctx.fillStyle = color; ctx.fillText(t, X(x), y);
+}
+function banner(t, color){
+  const s = Math.round(W*.045);
+  ctx.font = `600 ${s}px "Barlow","Arial",sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  const w = Math.min(W*.94, ctx.measureText(t).width + s*1.4);
+  ctx.fillStyle = "rgba(4,18,31,.82)"; ctx.beginPath(); ctx.roundRect(W/2-w/2, s*.5, w, s*1.8, s*.4); ctx.fill();
+  ctx.fillStyle = color || "#EAF3FB"; ctx.fillText(t, W/2, s*1.4, W*.9);
+}
+function draw(now){
+  ctx.save();
+  if(mirror){ ctx.translate(W,0); ctx.scale(-1,1); }
+  ctx.drawImage(frameSrc(), 0, 0, W, H);
+  ctx.restore();
+  const u = W/720;
+  // Weg: keine Dauer-Linien. Vorschau vor dem Start, im Lauf nur die naechsten 2 Sekunden.
+  const showObs = phase === "idle" && !preview;
+  // Hindernisse (nur vor dem Start, damit die Eltern den Scan pruefen koennen)
+  let pn = 0;
+  if(showObs) obstacles.forEach(o => {
+    if(o.type === "puck"){
+      const num = plan ? (kind === "eight" && plan.order.some(it => it.o === o) ? plan0Num(o) - 1 : plan.order.findIndex(it => it.o === o)) : -1;
+      circle(o.x, o.y, o.r + 6*u, num >= 0 ? "rgba(234,243,251,.8)" : "rgba(234,243,251,.45)", 2*u);
+      pn++;
+    }else{
+      ctx.strokeStyle = "rgba(255,138,30,.7)"; ctx.lineWidth = 3*u; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(X(o.x1),o.y1); ctx.lineTo(X(o.x2),o.y2); ctx.stroke();
+    }
+  });
+  if(barFirst) circle(barFirst.x, barFirst.y, 8*u, "#FF8A1E", 3*u, "#FF8A1E");
+  // Gemalte Striche mit Pfeilspitze am Ende
+  strokes.forEach(st => {
+    if(st.pts.length < 2) return;
+    ctx.save(); ctx.strokeStyle = st.col; ctx.fillStyle = st.col; ctx.lineWidth = 6*u; ctx.lineCap = "round"; ctx.lineJoin = "round";
+    ctx.shadowColor = "rgba(0,0,0,.45)"; ctx.shadowBlur = 4*u;
+    ctx.beginPath(); st.pts.forEach((p,i) => i ? ctx.lineTo(X(p.x),p.y) : ctx.moveTo(X(p.x),p.y)); ctx.stroke();
+    const e = st.pts[st.pts.length-1], q = st.pts[Math.max(0, st.pts.length-6)];
+    if(dist(e,q) > 4){ const a = Math.atan2(e.y-q.y, X(e.x)-X(q.x)), L = 18*u; ctx.beginPath(); ctx.moveTo(X(e.x), e.y); ctx.lineTo(X(e.x) - L*Math.cos(a-.45), e.y - L*Math.sin(a-.45)); ctx.lineTo(X(e.x) - L*Math.cos(a+.45), e.y - L*Math.sin(a+.45)); ctx.closePath(); ctx.fill(); }
+    ctx.restore();
+  });
+  // Start
+  if(start && !station() && ["idle","approach","calib"].includes(phase) && !preview){
+    const rs = Math.max(W*.06, legLen()*.55), f = feet(), inside = f && dist(f,start) < rs;
+    circle(start.x, start.y, rs, inside ? "#2BD98A" : "rgba(43,217,138,.8)", 4*u, inside ? "rgba(43,217,138,.25)" : "rgba(43,217,138,.08)");
+    label("START", start.x, start.y, 16*u, "#2BD98A");
+  }
+  // Ball
+  if(ballLive(now) && phase !== "preview") circle(ballPos.x, ballPos.y, 14*u, "#F7C23C", 3*u);
+  // Vorschau und Blick nach vorn
+  drawPreview(now, u);
+  drawAhead(now, u);
+  // Tempo: Anzeige voraus oder zurueck (ohne eigenen Puck auf dem Eis)
+  if(phase === "run" && pace && plan){
+    const gs = Math.min(plan.path.total, (now - runT0)/1000*pace*paceF);
+    const ds = (plan.path[progIdx].s - gs)/(pace*paceF);
+    label(Math.abs(ds) < .4 ? "im Tempo" : (ds > 0 ? "+" : "−") + Math.abs(ds).toFixed(1).replace(".",",") + " s " + (ds > 0 ? "voraus" : "zurück"),
+      W*.2, H - W*.06, W*.045, Math.abs(ds) < .4 ? "#2BD98A" : ds > 0 ? "#2BD98A" : "#F7C23C", "rgba(4,18,31,.8)");
+  }
+  // Skelett: tuerkise Linien und Gelenkpunkte, Winkel als Etikett am Gelenk
+  if(pose){
+    const p = pose.img, w = pose.world, m = w ? measure(w) : {}, C = "#35E0E8";
+    const bones = [[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28]];
+    ctx.save(); ctx.globalAlpha = .7; ctx.lineCap = "round"; ctx.strokeStyle = C; ctx.lineWidth = 2.2*u; ctx.shadowColor = "rgba(0,0,0,.35)"; ctx.shadowBlur = 2*u;
+    bones.forEach(([a2,b2]) => { if(p[a2].vis < .3 || p[b2].vis < .3) return; ctx.beginPath(); ctx.moveTo(X(p[a2].x),p[a2].y); ctx.lineTo(X(p[b2].x),p[b2].y); ctx.stroke(); });
+    // Hals zum Kopf
+    if(p[11].vis > .3 && p[12].vis > .3 && p[0].vis > .3){ const nx = (p[11].x+p[12].x)/2, ny = (p[11].y+p[12].y)/2, e = p[7].vis > p[8].vis ? p[7] : p[8]; ctx.beginPath(); ctx.moveTo(X(nx),ny); ctx.lineTo(X(e.x), e.y); ctx.stroke(); }
+    ctx.restore();
+    ctx.save(); ctx.globalAlpha = .8;
+    [11,12,13,14,15,16,23,24,25,26,27,28].forEach(i => { if(p[i].vis > .3) circle(p[i].x, p[i].y, 3*u, null, 0, C); });
+    ctx.restore();
+    // Kopf: Ring in Ampelfarbe und ein Pfeil, wohin das Kind schaut
+    if(p[0].vis > .3){
+      const hc = ({g:"#2BD98A", y:"#F7C23C", r:"#FF5A4C", n:C})[rate(METRICS[2], m.head)];
+      circle(p[0].x, p[0].y, 6*u, hc, 2.5*u, null);
+      const ea = p[7].vis > .3 && p[8].vis > .3 ? {x:(p[7].x+p[8].x)/2, y:(p[7].y+p[8].y)/2} : p[7].vis > p[8].vis ? p[7] : p[8];
+      let gx = p[0].x - ea.x, gy = p[0].y - ea.y;
+      // Blick nach unten aus der 3D-Schaetzung: je tiefer der Kopf, desto steiler zeigt der Pfeil zum Boden
+      if(isFinite(m.head)){ const down = Math.max(0, Math.min(1, (m.head + 10)/50)); const gl = Math.hypot(gx,gy) || 1; gx = gx/gl*(1-down); gy = gy/gl*(1-down) + down; }
+      const gl = Math.hypot(gx,gy);
+      if(gl > .05){
+        const L = W*.07, sx = X(p[0].x), sy = p[0].y, ex = sx + (mirror ? -gx : gx)/gl*L, ey = sy + gy/gl*L, a = Math.atan2(ey-sy, ex-sx);
+        ctx.save(); ctx.strokeStyle = hc; ctx.fillStyle = hc; ctx.lineWidth = 2.5*u; ctx.setLineDash([5*u,4*u]);
+        ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke(); ctx.setLineDash([]);
+        ctx.beginPath(); ctx.moveTo(ex, ey); ctx.lineTo(ex - 10*u*Math.cos(a-.5), ey - 10*u*Math.sin(a-.5)); ctx.lineTo(ex - 10*u*Math.cos(a+.5), ey - 10*u*Math.sin(a+.5)); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      }
+    }
+    // Winkel am Gelenk (Innenwinkel aus der 3D-Schaetzung, wie man ihn im Bild sieht)
+    const pill = (txt, x, y, col) => {
+      const fs = 12*u; ctx.font = `700 ${fs}px "Barlow Condensed","Arial Narrow",sans-serif`;
+      const tw = ctx.measureText(txt).width + fs*.8, hh = fs*1.35, px = X(x) + 10*u, py = y - hh/2;
+      ctx.fillStyle = col; ctx.beginPath(); ctx.roundRect(px, py, tw, hh, 4*u); ctx.fill();
+      ctx.fillStyle = "#04121F"; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText(txt, px + fs*.4, y + 1);
+    };
+    if(w){
+      const kc = ({g:"#2BD98A", y:"#F7C23C", r:"#FF5A4C", n:"#93AAC2"})[rate(METRICS[0], m.knee)];
+      [[23,25,27],[24,26,28]].forEach(([h,kn,an]) => { if(p[kn].vis > .4 && w[h].visibility > VIS && w[kn].visibility > VIS && w[an].visibility > VIS) pill(Math.round(ang3(w[h],w[kn],w[an])) + "°", p[kn].x, p[kn].y, kc); });
+      [[11,13,15],[12,14,16]].forEach(([sh,el,wr]) => { if(p[el].vis > .4 && w[sh].visibility > VIS_HAND && w[el].visibility > VIS_HAND && w[wr].visibility > VIS_HAND) pill(Math.round(ang3(w[sh],w[el],w[wr])) + "°", p[el].x, p[el].y, "#7FE9F0"); });
+    }
+    const f = feet(); if(f && !stickLive(now)) circle(f.x, f.y, 6*u, null, 0, "#EAF3FB");
+  }
+  // Ansagen
+  stamp();
+  const sec = phase === "run" ? (now - runT0)/1000 : phase === "done" ? (runEnd - runT0)/1000 : null;
+  if(preview) {} else if(phase === "approach") banner(station() ? (pose ? "An den Platz stellen, ganz im Bild bleiben" : "Kind nicht im Bild. Ganz ins Bild stellen") : pose ? "In den grünen Startkreis stellen" : "Kind nicht im Bild. Ganz ins Bild stellen", "#EAF3FB");
+  else if(phase === "calib") banner("Gerade stehen, nach vorn schauen", "#2BD98A");
+  else if(phase === "count"){
+    const c = 3 - Math.floor((now - phaseT)/1000);
+    banner("Grundposition einnehmen", "#2BD98A");
+    if(c > 0) label(String(c), W/2, H*.45, W*.28, "#EAF3FB");
+  }else if(phase === "run" && station()){
+    if(hint && now - hint.at < 2600) banner(hint.text, "#FF5A4C");
+    else banner(`${sx.reps} Wiederholungen · noch ${Math.max(0, Math.ceil(ex.secs - (now - runT0)/1000))} s`, "#EAF3FB");
+  }else if(phase === "run"){
+    if(hint && now - hint.at < 2600) banner(hint.text, "#FF5A4C");
+    else if(plan.steps[cpIdx]) banner((cpIdx+1) + ". " + plan.steps[cpIdx].text, "#EAF3FB");
+  }else if(phase === "done") banner(station() ? "Geschafft!" : plan && cpIdx >= plan.steps.length ? "Geschafft!" : "Durchgang beendet", "#2BD98A");
+  if(sec !== null) label(sec.toFixed(1).replace(".",",") + " s", W*.86, H - W*.06, W*.06, "#EAF3FB", "rgba(4,18,31,.8)");
+}
+/* Komet: Linienstueck mit heller Spitze, das zum Ende hin kraeftiger wird */
+function comet(path, s0, s1, u, col){
+  if(s1 <= s0) return;
+  const n = 24;
+  ctx.save(); ctx.lineCap = "round";
+  for(let i=1;i<=n;i++){
+    const a = pathAt(path, s0 + (s1-s0)*(i-1)/n), b = pathAt(path, s0 + (s1-s0)*i/n), k = i/n;
+    ctx.strokeStyle = col.replace("A", (.15 + .85*k).toFixed(2)); ctx.lineWidth = (2 + 6*k)*u;
+    ctx.beginPath(); ctx.moveTo(X(a.x), a.y); ctx.lineTo(X(b.x), b.y); ctx.stroke();
+  }
+  ctx.restore();
+  const e = pathAt(path, s1);
+  circle(e.x, e.y, 11*u, "#EAF3FB", 3*u, "#FF5A4C");
+}
+function keyPoints(){ return ex ? ex.points : ["Kopf hoch, Blick nach vorn", "Knie gebeugt, tief bleiben", "Ball eng am Schläger führen"]; }
+function caption(t, u){
+  const s2 = Math.round(W*.04);
+  ctx.font = `600 ${s2}px "Barlow","Arial",sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  const w = Math.min(W*.94, ctx.measureText(t).width + s2*1.4);
+  ctx.fillStyle = "rgba(4,18,31,.82)"; ctx.beginPath(); ctx.roundRect(W/2-w/2, H - s2*3.2, w, s2*1.9, s2*.4); ctx.fill();
+  ctx.fillStyle = "#F7C23C"; ctx.fillText(t, W/2, H - s2*2.25, W*.9);
+}
+// Stand-Uebung: Mitte und Breite aus dem Koerper, sonst grob aus dem Bild
+function stationFrame(){
+  const p = pose && pose.img;
+  if(p && p[23].vis > .3 && p[24].vis > .3 && p[11].vis > .3 && p[12].vis > .3)
+    return {cx:(p[23].x + p[24].x)/2, hw:dist(p[11],p[12])*ex.width/2, y:Math.max(p[27].y, p[28].y) + H*.02};
+  return {cx:W/2, hw:W*.14*ex.width, y:H*.78};
+}
+/* 7-Sekunden-Vorschau: ein Ball faehrt den ganzen Weg ab (oder pendelt bei der Stand-Uebung), dazu die Kernpunkte */
+function drawPreview(now, u){
+  if(!preview) return;
+  const t = (now - preview.t0)/PREV_MS;
+  if(t >= preview.loops){ endPreview(); return; }
+  const fr = t % 1, pts = keyPoints(), loop = Math.floor(t) + 1;
+  if(station()){
+    const sf = stationFrame(), x = sf.cx + sf.hw*Math.sin(fr*Math.PI*2*3);
+    [-1,1].forEach(sg => { ctx.save(); ctx.strokeStyle = "rgba(247,194,60,.85)"; ctx.lineWidth = 3*u; ctx.setLineDash([8*u,6*u]); ctx.beginPath(); ctx.moveTo(X(sf.cx + sg*sf.hw), sf.y - H*.05); ctx.lineTo(X(sf.cx + sg*sf.hw), sf.y + H*.04); ctx.stroke(); ctx.restore(); });
+    ctx.save(); ctx.strokeStyle = "rgba(255,90,76,.35)"; ctx.lineWidth = 6*u; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(X(sf.cx - sf.hw), sf.y); ctx.lineTo(X(sf.cx + sf.hw), sf.y); ctx.stroke(); ctx.restore();
+    circle(x, sf.y, 11*u, "#EAF3FB", 3*u, "#FF5A4C");
+    banner(`Vorschau ${loop}/${preview.loops}: Ball von Marke zu Marke`, "#F7C23C");
+  }else if(plan){
+    const L = plan.path.total, s1 = fr*L;
+    comet(plan.path, Math.max(0, s1 - L*.18), s1, u, "rgba(63,191,239,A)");
+    const st = plan.steps.find(q => (onPathS(q.cp) ?? 0) >= s1) || plan.steps[plan.steps.length-1];
+    if(st) circle(st.cp.x, st.cp.y, (14 + 3*Math.sin(now/150))*u, "#3FBFEF", 3*u);
+    banner(`Vorschau ${loop}/${preview.loops}: ${st ? st.text : ""}`, "#F7C23C");
+  }
+  caption(pts[Math.floor(fr*pts.length) % pts.length], u);
+}
+// Lage eines Punktes auf dem Weg (Weglaenge), fuer die Vorschau
+function onPathS(p){ if(!plan) return null; let best = null, bd = Infinity; for(const q of plan.path){ const d = dist(q,p); if(d < bd){ bd = d; best = q.s; } } return best; }
+/* Waehrend der Uebung: nur die naechsten 2 Sekunden des Weges, als Ball, der vorausfaehrt */
+function drawAhead(now, u){
+  if(phase === "count" && plan && !station()){
+    const L = Math.min(plan.path.total, (pace ? pace*paceF*2 : plan.path.total*.2));
+    comet(plan.path, 0, L*((now % 2000)/2000), u, "rgba(63,191,239,A)"); return;
+  }
+  if(phase !== "run") return;
+  const tau = (now % 2000)/2000;
+  if(station()){
+    if(!sx) return;
+    const sf = stationFrame(), side = sx.side ? -sx.side : 1, tx = sf.cx + side*sf.hw;
+    ctx.save(); ctx.strokeStyle = `rgba(247,194,60,${(.5 + .5*Math.sin(now/160)).toFixed(2)})`; ctx.lineWidth = 4*u; ctx.setLineDash([8*u,6*u]);
+    ctx.beginPath(); ctx.moveTo(X(tx), sf.y - H*.05); ctx.lineTo(X(tx), sf.y + H*.04); ctx.stroke(); ctx.restore();
+    const fx = ballLive(now) ? ballPos.x : sf.cx - side*sf.hw, x = fx + (tx - fx)*tau;
+    circle(x, sf.y, 9*u, "#EAF3FB", 2.5*u, "rgba(255,90,76,.85)");
+    return;
+  }
+  if(!plan) return;
+  const s0 = plan.path[progIdx] ? plan.path[progIdx].s : 0, L = pace ? pace*paceF*2 : plan.path.total*.2;
+  const s1 = Math.min(plan.path.total, s0 + L*tau);
+  comet(plan.path, s0, s1, u, "rgba(63,191,239,A)");
+  const st = plan.steps[cpIdx];
+  if(st && st.cp && (onPathS(st.cp) ?? Infinity) <= s0 + L*1.2) circle(st.cp.x, st.cp.y, (15 + 3*Math.sin(now/160))*u, "#3FBFEF", 3*u);
+}
+function stamp(){
+  if(OPEN) return;
+  const fs = Math.max(10, Math.min(W, H)/34), slot = Math.floor(Date.now()/7000), ox = ((slot*97) % 61)/100, oy = ((slot*53) % 47)/100;
+  ctx.save(); ctx.font = `600 ${fs}px system-ui,sans-serif`; ctx.fillStyle = "rgba(255,255,255,.22)"; ctx.strokeStyle = "rgba(0,0,0,.18)"; ctx.lineWidth = 1;
+  ctx.textAlign = "left"; ctx.textBaseline = "alphabetic"; ctx.translate(W/2, H/2); ctx.rotate(-0.38);
+  const step = fs*7, tw = ctx.measureText(WM_TEXT).width;
+  for(let row=-3; row<=3; row++){ const y = row*step + (oy-0.5)*step, x = (ox-0.5)*step*2 + (row%2)*step; ctx.strokeText(WM_TEXT, x - tw/2, y); ctx.fillText(WM_TEXT, x - tw/2, y); }
+  ctx.restore();
+}
+function loop(){
+  const now = performance.now();
+  if(W && $("replay").hidden){ if(!frozen){ detect(); trackBall(now); tick(now); } draw(now); }
+  requestAnimationFrame(loop);
+}
+
+/* ---------- Quelle: Kamera oder Video ---------- */
+function onSource(){
+  const vw = video.videoWidth, vh = video.videoHeight, s = Math.min(1, 1280/Math.max(vw,vh));
+  W = Math.round(vw*s); H = Math.round(vh*s); cv.width = W; cv.height = H;
+  $("empty").hidden = true; cv.style.display = "block"; $("stagebar").hidden = false; $("drawbar").hidden = false;
+  $("flipCam").disabled = fileMode;
+  setFrozen(false); strokes = []; autoInfo = "";
+  obstacles = []; start = null; plan = null; phase = "idle"; ballCol = null; ballPos = null; pace = null; renderPlan();
+  setStatus(fileMode ? "Video geladen. Am besten an einer Stelle anhalten, wo der Boden frei ist, dann scannen." : "Kamera läuft. Spielfeld frei machen, dann scannen.");
+  ui();
+}
+/* Kamera anfordern. Der Browser fragt nur auf einer sicheren Seite (https) und nicht in eingebetteten Vorschauen.
+   Klappt es nicht, sagt die App genau, woran es liegt. */
+async function startCam(){
+  const embedded = (() => { try{ return window.top !== window.self; }catch(e){ return true; } })();
+  if(!window.isSecureContext || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    setStatus(`Die Kamera geht hier nicht, weil die Seite nicht über https geöffnet ist (${location.protocol === "file:" || location.protocol === "content:" ? "Datei direkt vom Handy oder aus Telegram" : location.protocol.replace(":","")}). Öffne die App über deine Netlify-Adresse (https://…) in Chrome oder Safari, oder lade ein Video.`);
+    return;
+  }
+  if(stream) stream.getTracks().forEach(t => t.stop());
+  setStatus("Kamera wird angefragt. Bitte im Browser „Zulassen“ tippen.");
+  const tries = [{video:{facingMode:facing, width:{ideal:1280}, height:{ideal:720}}, audio:false}, {video:{facingMode:facing}, audio:false}, {video:true, audio:false}];
+  let err = null;
+  for(const c of tries){
+    try{ stream = await navigator.mediaDevices.getUserMedia(c); err = null; break; }catch(e){ err = e; if(e && (e.name === "NotAllowedError" || e.name === "SecurityError")) break; }
+  }
+  if(err || !stream){
+    const n = err && err.name;
+    setStatus(
+      n === "NotAllowedError" || n === "SecurityError"
+        ? (embedded ? "Die Kamera ist in dieser Vorschau gesperrt (z. B. im Claude-Link). Öffne die App über deine Netlify-Adresse direkt im Browser."
+                    : "Die Kamera wurde blockiert. Tippe links neben der Adresse auf das Schloss-Symbol, stelle „Kamera“ auf „Zulassen“ und lade die Seite neu. Auf dem iPhone: Einstellungen › Safari › Kamera › Erlauben.")
+      : n === "NotFoundError" ? "Es wurde keine Kamera gefunden. Lade stattdessen ein Video."
+      : n === "NotReadableError" ? "Die Kamera wird gerade von einer anderen App benutzt (z. B. Kamera-App oder Videoanruf). Diese schließen und erneut versuchen."
+      : "Kein Kamerazugriff (" + (n || "unbekannt") + "). Bitte die App über https öffnen und die Kamera erlauben, oder ein Video laden.");
+    return;
+  }
+  fileMode = false; video.removeAttribute("src"); video.srcObject = stream; video.loop = false;
+  try{ await video.play(); }catch(e){}
+  setStatus("Kamera läuft.");
+  if(video.videoWidth) onSource(); else video.onloadedmetadata = () => onSource();
+}
+$("camBtn").onclick = startCam;
+$("flipCam").onclick = () => { facing = facing === "environment" ? "user" : "environment"; mirror = facing === "user"; $("mirror").setAttribute("aria-pressed", String(mirror)); startCam(); };
+$("rec").onchange = e => $("file").onchange(e);
+$("file").onchange = e => {
+  const f = e.target.files[0]; if(!f) return;
+  if(stream){ stream.getTracks().forEach(t => t.stop()); stream = null; }
+  fileMode = true; video.srcObject = null; video.src = URL.createObjectURL(f); video.loop = true;
+  video.onloadeddata = () => { video.pause(); video.currentTime = 0; onSource(); };
+};
+$("mirror").onclick = () => { mirror = !mirror; $("mirror").setAttribute("aria-pressed", String(mirror)); if(plan) buildPlan(); };
+$("voice").onclick = () => { voiceOn = !voiceOn; $("voice").setAttribute("aria-pressed", String(voiceOn)); $("voice").textContent = voiceOn ? "Sprache an" : "Sprache aus"; if(!voiceOn) try{ speechSynthesis.cancel(); }catch(e){} };
+$("fs").onclick = () => { const s = $("stage"); if(document.fullscreenElement) document.exitFullscreen(); else if(s.requestFullscreen) s.requestFullscreen(); };
+cv.addEventListener("click", () => { if(fileMode && !tool && !drawCol && !frozen && phase === "idle"){ video.paused ? video.play() : video.pause(); } });
+
+/* ---------- Uebung waehlen ---------- */
+function renderExList(){
+  document.querySelectorAll("#lvlTabs button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.l === exLvl)));
+  const list = EXERCISES.filter(e => e.lvl === exLvl);
+  $("exList").innerHTML = list.map(e => `<button data-ex="${e.id}" aria-pressed="${ex === e}"><span>${e.title}</span><small>${e.type === "station" ? e.secs + " s am Platz" : "Weg um Pucks"} · Vorführung vorhanden</small></button>`).join("")
+    + (exLvl === 1 ? `<button data-ex="free" aria-pressed="${ex === null && freePick}"><span>Freier Parcours</span><small>App baut die Übung aus dem, was auf dem Boden liegt</small></button>` : "");
+  $("exList").querySelectorAll("button").forEach(b => b.onclick = () => pickEx(b.dataset.ex));
+}
+let freePick = false;
+function pickEx(id){
+  ex = EXERCISES.find(e => e.id === id) || null; freePick = !ex;
+  renderExList();
+  const box = $("exInfo"); box.hidden = false;
+  box.innerHTML = ex ? `<h3>${ex.title}</h3><p style="margin:0"><b>Aufbau:</b> ${ex.setup}</p><b>Worauf achten:</b><ul>${ex.points.map(p => `<li>${p}</li>`).join("")}</ul>
+      <div class="row" style="margin-top:10px"><button id="demoVid">Vorführung ansehen</button></div>`
+    : `<h3>Freier Parcours</h3><p style="margin:0">Pucks und Stangen hinlegen, scannen, die App wählt Slalom, Umrunden oder Mix.</p>`;
+  if(ex) $("demoVid").onclick = () => playDemo(ex);
+  $("trainTxt").innerHTML = station()
+    ? `Das Kind stellt sich an seinen Platz. Nach dem Countdown laufen <b>${ex.secs} Sekunden</b>. Die App zählt die Seitenwechsel des Balls, misst die Breite und ob die Füße ruhig bleiben.`
+    : `Runde 1 ist die <b>Messrunde</b>: Das Kind fährt die blaue Linie mit dem Ball in seinem eigenen Tempo. Danach läuft ein Tempo-Puck auf der Linie mit, dem das Kind folgt.`;
+  $("paceBox").hidden = station();
+  pace = null;
+  if(obstacles.length){ autoExercise(); buildPlan(); }
+  if(station()) plan = null, renderPlan();
+  ui();
+}
+function playDemo(e){
+  const r = $("replay"); r.hidden = false; $("replayBar").hidden = false; r.src = e.video; r.muted = false;
+  $("stage").classList.add("demo"); $("rpClose").textContent = "Vorführung schließen";
+  try{ $("stage").scrollIntoView({behavior:"smooth", block:"start"}); }catch(er){}
+  $("empty").hidden = true;
+  r.onerror = () => { setStatus("Das Vorführvideo fehlt. Der Ordner „uebungen“ muss neben der App liegen."); closeReplay(); if(!W) $("empty").hidden = false; };
+  r.onended = () => { if(!W){ closeReplay(); $("empty").hidden = false; } };
+  r.playbackRate = 1; r.play().catch(()=>{});
+}
+document.querySelectorAll("#lvlTabs button").forEach(b => b.onclick = () => { exLvl = +b.dataset.l; renderExList(); });
+renderExList();
+
+/* ---------- Bild einfrieren und zeichnen ----------
+   Eingefroren steht das Bild still, Wischen scrollt nicht und malt stattdessen. */
+function setFrozen(on){
+  if(on && W){
+    frozen = document.createElement("canvas"); frozen.width = W; frozen.height = H;
+    frozen.getContext("2d").drawImage(video, 0, 0, W, H);
+    if(fileMode) video.pause();
+  }else{ frozen = null; setDrawCol(null); }
+  $("freeze").setAttribute("aria-pressed", String(!!frozen)); $("freeze").textContent = frozen ? "Bild läuft weiter" : "Bild einfrieren";
+  cv.classList.toggle("frozen", !!frozen);
+}
+function setDrawCol(c){
+  drawCol = c;
+  document.querySelectorAll("#drawbar .col").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.col === drawCol)));
+  if(c){ setTool(null); if(!frozen) setFrozen(true); setStatus("Mit dem Finger auf das Bild malen. Blau als Weg für den Puck, Gelb und Rot für Hinweise."); }
+}
+$("freeze").onclick = () => setFrozen(!frozen);
+document.querySelectorAll("#drawbar .col").forEach(b => b.onclick = () => setDrawCol(drawCol === b.dataset.col ? null : b.dataset.col));
+$("drUndo").onclick = () => { strokes.pop(); };
+$("drClear").onclick = () => { strokes = []; };
+$("drPath").onclick = () => {
+  const st = [...strokes].reverse().find(x => x.col === "#3FBFEF") || strokes[strokes.length-1];
+  if(!st){ setStatus("Erst einen Weg malen, am besten in Blau."); return; }
+  if(!planFromStroke(st)){ setStatus("Der Strich ist zu kurz für einen Weg."); return; }
+  strokes.splice(strokes.indexOf(st), 1);
+  pace = null; setDrawCol(null);
+  setStatus("Der gemalte Weg ist jetzt die Übung. Das Kind startet am Anfang der Linie."); ui();
+};
+const cvPt = e => { const r = cv.getBoundingClientRect(); let x = (e.clientX - r.left)*W/r.width; const y = (e.clientY - r.top)*H/r.height; if(mirror) x = W - x; return {x,y}; };
+cv.addEventListener("pointerdown", e => { if(!drawCol) return; e.preventDefault(); cv.setPointerCapture(e.pointerId); curStroke = {col:drawCol, pts:[cvPt(e)]}; strokes.push(curStroke); });
+cv.addEventListener("pointermove", e => { if(!drawCol || !curStroke) return; e.preventDefault(); const p = cvPt(e); if(dist(p, curStroke.pts[curStroke.pts.length-1]) > 2) curStroke.pts.push(p); });
+const endStroke = () => { if(curStroke && curStroke.pts.length < 2) strokes.pop(); curStroke = null; };
+cv.addEventListener("pointerup", endStroke); cv.addEventListener("pointercancel", endStroke);
+
+/* ---------- Bedienung ---------- */
+$("scanBtn").onclick = () => {
+  if(fileMode && !video.paused) video.pause();
+  const keep = obstacles.filter(o => o.manual);
+  obstacles = keep.concat(scanField());
+  const np = obstacles.filter(o => o.type === "puck").length, nb = obstacles.filter(o => o.type === "bar").length;
+  start = start && start.manual ? start : defaultStart();
+  seed = 1; pace = null; autoExercise(); buildPlan();
+  if(station()){ plan = null; autoInfo = ""; renderPlan(); }
+  saveBg();
+  if(scanBall && !ballCol) learnBall(scanBall.x, scanBall.y);
+  setStatus(`${np} ${np === 1 ? "Puck" : "Pucks"} und ${nb} ${nb === 1 ? "Stange" : "Stangen"} erkannt${ballCol ? ", Ball gefunden" : ", kein Ball gefunden (mit „Ball“ antippen)"}. Prüfe das Bild und korrigiere bei Bedarf mit den Knöpfen darunter.`);
+  ui();
+};
+const TIPS = {puck:"Tippe auf den Boden, wo ein Puck liegt.", bar:"Tippe auf beide Enden der Stange.", start:"Tippe auf die Stelle, an der das Kind starten soll.", del:"Tippe auf einen Puck oder eine Stange, um sie zu entfernen.", ball:"Tippe auf den Ball, mit dem das Kind spielt. Die App merkt sich seine Farbe."};
+function setTool(t){
+  tool = t; barFirst = null;
+  document.querySelectorAll("#toolSeg button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.tool === tool)));
+  $("toolTip").textContent = tool ? TIPS[tool] : ""; cv.classList.toggle("edit", !!tool);
+}
+document.querySelectorAll("#toolSeg button").forEach(b => b.onclick = () => setTool(tool === b.dataset.tool ? null : b.dataset.tool));
+// Nur echte Tipps zaehlen: wer beim Scrollen ueber das Bild wischt, setzt keine Pucks
+let downAt = null;
+cv.addEventListener("pointerdown", e => { downAt = {x:e.clientX, y:e.clientY, t:performance.now()}; });
+// Startkreis direkt verschieben: anfassen und ziehen (mit dem Finger nach „Startpunkt setzen“ einfach antippen)
+let dragStart = false;
+cv.addEventListener("pointerdown", e => {
+  if(tool || drawCol || !start || !W || !["idle","done"].includes(phase)) return;
+  const p = cvPt(e), rs = Math.max(W*.06, legLen()*.55);
+  if(dist(p, start) > rs) return;
+  dragStart = true; e.preventDefault(); try{ cv.setPointerCapture(e.pointerId); }catch(er){}
+});
+cv.addEventListener("pointermove", e => { if(!dragStart) return; e.preventDefault(); const p = cvPt(e); start = {x:p.x, y:p.y, manual:true}; });
+const endDrag = () => { if(!dragStart) return; dragStart = false; if(plan && !plan.drawn) buildPlan(); ui(); setStatus("Startpunkt verschoben."); };
+cv.addEventListener("pointerup", endDrag); cv.addEventListener("pointercancel", endDrag);
+$("startBtn").onclick = () => { setTool(tool === "start" ? null : "start"); if(tool) setStatus("Tippe ins Bild, wo das Kind starten soll."); };
+cv.addEventListener("pointercancel", () => { downAt = null; });
+cv.addEventListener("pointerup", e => {
+  if(!tool || drawCol || !W) return;
+  const d0 = downAt; downAt = null;
+  if(!d0 || Math.hypot(e.clientX - d0.x, e.clientY - d0.y) > 12 || performance.now() - d0.t > 700) return;
+  const r = cv.getBoundingClientRect();
+  let x = (e.clientX - r.left) * W / r.width; const y = (e.clientY - r.top) * H / r.height;
+  if(mirror) x = W - x;
+  const p = {x,y}, u = W/720;
+  if(tool === "puck"){
+    if(obstacles.some(o => o.type === "puck" && dist(o,p) < 30*u)) return;
+    obstacles.push({type:"puck", x, y, r:12*u, manual:true});
+  }
+  else if(tool === "start"){ start = {x, y, manual:true}; setStatus("Startpunkt gesetzt."); if(plan && plan.drawn){ setTool(null); ui(); return; } }
+  else if(tool === "ball"){ setStatus(learnBall(x, y) ? "Ball gemerkt. Die App verfolgt ihn jetzt (gelber Ring)." : "Dort ist kein Ball zu erkennen. Bitte genau auf den Ball tippen, ein farbiger Ball geht am besten."); setTool(null); return; }
+  else if(tool === "bar"){
+    if(!barFirst){ barFirst = p; return; }
+    obstacles.push({type:"bar", x1:barFirst.x, y1:barFirst.y, x2:x, y2:y, manual:true}); barFirst = null;
+  }else if(tool === "del"){
+    let best = -1, bd = 40*u;
+    obstacles.forEach((o,i) => {
+      let d;
+      if(o.type === "puck") d = dist(o,p);
+      else{ const vx = o.x2-o.x1, vy = o.y2-o.y1, t = Math.max(0,Math.min(1,((x-o.x1)*vx+(y-o.y1)*vy)/(vx*vx+vy*vy||1))); d = Math.hypot(o.x1+vx*t-x, o.y1+vy*t-y); }
+      if(d < bd){ bd = d; best = i; }
+    });
+    if(best >= 0) obstacles.splice(best,1);
+  }
+  // Nach jedem Eintrag ist das Werkzeug wieder aus: ein Tipp, ein Puck
+  if(!(tool === "bar" && barFirst)) setTool(null);
+  if(obstacles.length || start) buildPlan();
+  const np = obstacles.filter(o => o.type === "puck").length, nb = obstacles.filter(o => o.type === "bar").length;
+  setStatus(`Jetzt ${np} ${np === 1 ? "Puck" : "Pucks"} und ${nb} ${nb === 1 ? "Stange" : "Stangen"}. Für weitere Änderungen den Knopf erneut antippen.`);
+  ui();
+});
+document.querySelectorAll("#kindSeg button").forEach(b => b.onclick = () => {
+  kind = b.dataset.kind; document.querySelectorAll("#kindSeg button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  autoInfo = `<b>Übung: ${b.textContent}</b> (selbst gewählt).`;
+  if(obstacles.length) buildPlan(); ui();
+});
+document.querySelectorAll("#lvlSeg button").forEach(b => b.onclick = () => {
+  level = +b.dataset.lvl; document.querySelectorAll("#lvlSeg button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  if(obstacles.length) buildPlan(); ui();
+});
+$("genBtn").onclick = () => { seed = (Math.random()*1e9)|0 || 2; if(plan && plan.drawn) autoExercise(); buildPlan(); ui(); };
+$("demoBtn").onclick = () => { if(plan || station()) preview = {t0:performance.now(), loops:1}; };
+$("goBtn").onclick = () => phase === "preview" ? endPreview() : startTraining();
+$("remeasure").onclick = () => { pace = null; ui(); };
+document.querySelectorAll("#paceSeg button").forEach(b => b.onclick = () => {
+  paceF = +b.dataset.pace; document.querySelectorAll("#paceSeg button").forEach(x => x.setAttribute("aria-pressed", String(x === b))); ui();
+});
+$("rpClose").onclick = closeReplay;
+$("rpSlow").onclick = () => { const r = $("replay"), on = r.playbackRate === 1; r.playbackRate = on ? .5 : 1; $("rpSlow").setAttribute("aria-pressed", String(on)); };
+$("stopBtn").onclick = () => stopTraining(true);
+$("player").onchange = showHistory;
+
+function ui(){
+  const has = !!W, scanned = obstacles.length > 0, live = ["preview","approach","calib","count","run"].includes(phase);
+  $("scanBtn").disabled = !has || live;
+  $("genBtn").disabled = !scanned || live; $("startBtn").disabled = !W || live || station(); $("startBtn").setAttribute("aria-pressed", String(tool === "start")); $("freeze").disabled = live; $("demoBtn").disabled = !(plan || (station() && W)) || live;
+  $("goBtn").disabled = phase === "preview" ? false : !(plan || (station() && W)) || live || !landmarker; $("stopBtn").disabled = !live;
+  $("goBtn").textContent = phase === "preview" ? "Vorschau überspringen" : station() ? `${ex.secs} Sekunden starten` : pace ? "Trainingsrunde starten" : "Messrunde starten"; $("remeasure").disabled = !pace || live;
+  $("paceInfo").textContent = pace && plan ? `Gemessen: ${(plan.path.total/pace).toFixed(1).replace(".",",")} s für die Runde. Tempo-Puck: ${(plan.path.total/(pace*paceF)).toFixed(1).replace(".",",")} s.` : "Noch kein Tempo gemessen. Die erste Runde ist die Messrunde.";
+  const st = (id, on, cur, done) => { $(id).className = "step" + (on ? "" : " off") + (cur ? " cur" : "") + (done ? " done" : ""); };
+  const chosen = !!ex || freePick, ready = !!plan || (station() && !!W);
+  st("s0", true, !chosen, chosen);
+  st("s1", chosen, chosen && !ready, ready);
+  st("s3", ready, ready && phase !== "done", phase === "done");
+  st("s4", phase === "done" || !!localStorage.getItem("ivp-history"), phase === "done", false);
+}
+if(OPEN) window.ivpTrack = () => trackBall(performance.now());
+if(OPEN) window.ivpState = () => ({phase, cpIdx, feet:feet(), start, steps:plan ? plan.steps.length : 0, headZero, ball:ballCol, ballPos, pace, trail:trail.length, stick: stick ? {tip:stick.tip, hi:stick.hi} : null, bladeMax, tplScore, clip:!!clipURL, moments:Object.keys(moments)});
+try{ showHistory(); }catch(e){}
+ui(); initModel(); requestAnimationFrame(loop);
+</script>
+</body>
+</html>
